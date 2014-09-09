@@ -1,5 +1,9 @@
 # small prototype for a supercompiler
 
+# TODO
+# - how to handle types in typed languages/interpreted languages (assignment, etc)
+#   needs a implementable variable type conversion system
+
 class Graph(object):
     def __init__(self):
         self.elements = []
@@ -18,6 +22,7 @@ class GraphElement(object):
 
 class EnumDrivingGraphElementContentType(object):
     NOP = 0
+    CONTINUE = 1 # if an explicit or implicit continue of a loop was executed, is actually a nop
 
 class EnumVariableType(object):
     INTEGER = 0
@@ -42,6 +47,7 @@ class EnumAbstractSyntaxTreeNodeType(object):
     ASSIGMENT = 5
     CONSTANT = 6
     IDENTIFIER = 7
+    SEQUENCE = 8
 
 class AbstractSyntaxTreeNode(object):
     def __init__(self, type):
@@ -49,6 +55,9 @@ class AbstractSyntaxTreeNode(object):
 
         self.childrens = []
 
+class SequenceAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
+    def __init__(self):
+        super(LoopAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.SEQUENCE)
 
 # in the body we need a condition for breaking
 # the body are all instructions
@@ -98,13 +107,36 @@ class DrivingVariable(object):
 
         self.value = None # type is "Value"
 
+# small layer above the lookup and storage of variables while driving
+class DrivingVariableContainer(object):
+    def __init__(self):
+        # TODO< should be a hashtable for faster lookup >
+        self.variables = [] # instances of "DrivingVariable"
+
+    # returns the DrivingVariable instance if found
+    # throws VariableLookupException if no variable was found
+    def lookupVariableByName(self, name):
+        for iterationVariable in self.variables:
+            if iterationVariable.name == name:
+                return iterationVariable
+
+        # TODO< throw exception >
+        assert False
+
+    # TODO
+    def copy(self):
+        assert False
+
+
 
 class DrivingDescriptor(object):
     def __init__(self):
         self.astElement = None  # the current abstract syntax element which is "executed" next
         self.astElementIndex = None
 
-        self.variables = []  # instances of "DrivingVariable"
+        # used to store and lookup variables
+        # which are instances of "DrivingVariable"
+        self.variableContainer = DrivingVariableContainer()
         self.outputGraphIndex = None  # index of the root Graph element where the next nodes are appended
 
         # tupes of the form (astElement, astElementIndex)
@@ -115,7 +147,7 @@ class DrivingDescriptor(object):
         createdDescriptor = DrivingDescriptor()
         createdDescriptor.astElement = self.astElement
         createdDescriptor.astElementIndex = self.astElementIndex
-        createdDescriptor.variables = self.variables
+        createdDescriptor.variableContainer = self.variableContainer.copy()
         createdDescriptor.outputGraphIndex = self.outputGraphIndex
         createdDescriptor.traceback = self.traceback
 
@@ -157,8 +189,7 @@ class Supercompiler(object):
                 iterationDrivingDescriptor.astElement = iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex]
                 iterationDrivingDescriptor.astElementIndex = 0
 
-            elif iterationDrivingDescriptor.astElement.childrens[
-                iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.ONEWAYCONDITION:
+            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.ONEWAYCONDITION:
                 # TODO
                 pass
 
@@ -188,10 +219,18 @@ class Supercompiler(object):
                     drivingDescriptorIndex -= 1
 
             elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.CONTINUE:
+                # inform the generalisation that a continue happend, so it can fold it
+                # ASK< correct way to inform it? >
+                self._drivingGraph.addElement(GraphElement(DrivingGraphElementContent(EnumDrivingGraphElementContentType.CONTINUE)))
+                newOutputgraphIndex = len(self._drivingGraph.elements)-1
+                self._drivingGraph.elements[iterationDrivingDescriptor.outputGraphIndex].childIndices.append(newOutputgraphIndex)
+                iterationDrivingDescriptor.outputGraphIndex = newOutputgraphIndex
+
                 currentAstElement = iterationDrivingDescriptor.astElement
 
                 iterationDrivingDescriptor.astElement = currentAstElement
                 iterationDrivingDescriptor.astElementIndex = 0
+            
 
             else:
                 assert False
@@ -200,14 +239,26 @@ class Supercompiler(object):
 
 
 supercompiler = Supercompiler()
-supercompiler._ast = LoopAbstractSyntaxTreeNode()
-supercompiler._ast.childrens.append(ContinueAbstractSyntaxTreeNode())
+supercompiler._ast = SequenceAbstractSyntaxTreeNode()
+supercompiler._ast.childrens.append(AssignmentAbstractSyntaxTreeNode())
+supercompiler._ast.childrens[0].leftSide = IdentifierAbstractSyntaxTreeNode("a")
+supercompiler._ast.childrens[0].rightSide = ConstantAbstractSyntaxTreeNode()
+supercompiler._ast.childrens[0].rightSide.value = 5
+supercompiler._ast.childrens.append(AssignmentAbstractSyntaxTreeNode())
+supercompiler._ast.childrens[0].leftSide = IdentifierAbstractSyntaxTreeNode("b")
+supercompiler._ast.childrens[0].rightSide = ConstantAbstractSyntaxTreeNode()
+supercompiler._ast.childrens[0].rightSide.value = 0
+
+
+#supercompiler._ast = LoopAbstractSyntaxTreeNode()
+#supercompiler._ast.childrens.append(ContinueAbstractSyntaxTreeNode())
 
 supercompiler._drivingDescriptors.append(DrivingDescriptor())
 supercompiler._drivingDescriptors[0].astElement = supercompiler._ast
 supercompiler._drivingDescriptors[0].astElementIndex = 0
+supercompiler._drivingDescriptors[0].outputGraphIndex = 0
 
-supercompiler.drive()
+supercompiler._drive()
 
 # TODO< assigment, variable creation/retrival for Driving descriptor >
 
