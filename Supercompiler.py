@@ -49,84 +49,18 @@ class DrivingGraphAssignmentElement(DrivingGraphElement):
         self.rightExpression = None # must be derived from DrivingGraphExpressions.Expression
                                     # is the expression which gets evaluated for the value of the variable
 
-class EnumAbstractSyntaxTreeNodeType(object):
-    LOOP = 0
-    ONEWAYCONDITION = 1
-    CONTINUE = 2
-    NOP = 3  # for testing
-    ROOT = 4 # pseudo, only the top element can be a root element
-    ASSIGNMENT = 5
-    CONSTANT = 6
-    IDENTIFIER = 7
-    SEQUENCE = 8
-
-class EnumBinaryOperationType:
-    ADD = 0
-    SUB = 1
-    MUL = 2
-    DIV = 3
-
-class AbstractSyntaxTreeNode(object):
-    def __init__(self, type):
-        self.type = type
-
-        self.childrens = []
-
-class SequenceAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(SequenceAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.SEQUENCE)
-
-# in the body we need a condition for breaking
-# the body are all instructions
-class LoopAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(LoopAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.LOOP)
 
 
-class OneWayAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(OneWayAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ONEWAYCONDITION)
-
-        self.conditionAstElement = None
 
 
-# neded for simpler evaluation
-class ContinueAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(ContinueAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.CONTINUE)
-
-class RootAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(RootAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ROOT)
-
-class AssignmentAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(AssignmentAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ASSIGNMENT)
-
-        self.leftSide = None # instance of AbstractSyntaxTreeNode
-        self.rightSide = None # instance of AbstractSyntaxTreeNode
-
-class AssignmentOperationAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self, operation: EnumBinaryOperationType):
-        super(AssignmentOperationAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION)
-
-        self.operation = operation
-
-        self.leftSide = None # instance of AbstractSyntaxTreeNode
-        self.rightSide = None # instance of AbstractSyntaxTreeNode
 
 
-class ConstantAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self):
-        super(ConstantAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.CONSTANT)
+#class RootAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
+#    def __init__(self):
+#        super(RootAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ROOT)
 
-        self.value = None # type is "Value"
 
-class IdentifierAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-    def __init__(self, name):
-        super(IdentifierAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.IDENTIFIER)
 
-        self.name = name
 
 class EnumDrivingVariableConstness(object):
     CONSTANT = 0
@@ -377,6 +311,17 @@ class Supercompiler(object):
 
             drivingDescriptorIndex += 1
 
+
+# example without parser
+from AbstractSyntaxTree.SequenceAbstractSyntaxTreeNode import SequenceAbstractSyntaxTreeNode
+from AbstractSyntaxTree.IdentifierAbstractSyntaxTreeNode import IdentifierAbstractSyntaxTreeNode
+from AbstractSyntaxTree.AssignmentAbstractSyntaxTreeNode import AssignmentAbstractSyntaxTreeNode
+from AbstractSyntaxTree.ConstantAbstractSyntaxTreeNode import ConstantAbstractSyntaxTreeNode
+from AbstractSyntaxTree.LoopAbstractSyntaxTreeNode import LoopAbstractSyntaxTreeNode
+from AbstractSyntaxTree.AssignmentOperationAbstractSyntaxTreeNode import AssignmentOperationAbstractSyntaxTreeNode
+from AbstractSyntaxTree.ContinueAbstractSyntaxTreeNode import ContinueAbstractSyntaxTreeNode
+
+from AbstractSyntaxTree.EnumBinaryOperationType import EnumBinaryOperationType
 
 supercompiler = Supercompiler()
 supercompiler._ast = SequenceAbstractSyntaxTreeNode()
