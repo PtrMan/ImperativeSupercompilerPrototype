@@ -8,3 +8,4 @@ class EnumAbstractSyntaxTreeNodeType(object):
     CONSTANT = 6
     IDENTIFIER = 7
     SEQUENCE = 8
+    ASSIGNMENTOPERATION = 9

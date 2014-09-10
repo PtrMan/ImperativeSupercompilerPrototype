@@ -62,96 +62,12 @@ class DrivingGraphAssignmentElement(DrivingGraphElement):
 
 
 
-class EnumDrivingVariableConstness(object):
-    CONSTANT = 0
-    NONCONSTANT = 1
-    INVALID = 2 # if it is a object it doesn'T have directly this property
-
-class EnumTypeNature:
-    BUILDIN = 0 # it is a build in value, like int, float, double, etc.
-    USERDEFINED = 1
-
 class EnumBuildinType:
     INT = 0
 
-# TODO< how to handle residuals and non residuals ??? >
-class DrivingValue(object):
-    def __init__(self, typeNature: EnumTypeNature):
-        self.typeNature = typeNature
-        self.buildinType = None # only valid if self.typeNature == EnumBuildinType.BUILDIN
+from Driving.DrivingValue import DrivingValue
 
-        # gives the supercompiler information if the value was ever changed
-        # if it was never changed it can be handled as a real constant
-        self.constness = EnumDrivingVariableConstness.INVALID
-
-        # for oop objects this contains the DrivingValues of the variables
-        # if it is valid this is a dict
-        self.objectValues = None
-
-        # for buildin value this contains the value
-        self.buildinValue = None
-
-    ## gets this object/value as a disjuct object which seperates type information and the value
-    #
-    # this is later needed because copying the whole object is no solution, because most information is redudant (all up to the value)
-    def getAsDisjuctTypeValue(self):
-        # for simplicity we just return a copy
-        return self._copy()
-
-    def _copy(self):
-        result = DrivingValue(self.typeNature)
-        result.buildinType = self.buildinType
-        result.constness = self.constness
-
-        if result.objectValues == None:
-            pass
-        else:
-            result.objectValues = {}
-
-            for iterationKey in self.objectValues.keys():
-                result.objectValues[iterationKey] = self.objectValues[iterationKey].getAsDisjuctTypeValue()
-
-        result.buildinValue = self.buildinValue
-
-        return result
-
-
-class DrivingVariable(object):
-    def __init__(self):
-        self.name = None
-
-        self.value = None # type is "DrivingValue"
-
-# small layer above the lookup and storage of variables while driving
-class DrivingVariableContainer(object):
-    def __init__(self):
-        # TODO< should be a hashtable for faster lookup >
-        self.variables = [] # instances of "DrivingVariable"
-
-    # returns the DrivingVariable instance if found
-    # throws VariableLookupException if no variable was found
-    def lookupVariableByName(self, name: str) -> DrivingVariable:
-        for iterationVariable in self.variables:
-            if iterationVariable.name == name:
-                return iterationVariable
-
-        assert False
-
-    def existVariableByName(self, name: str) -> bool:
-        for iterationVariable in self.variables:
-            if iterationVariable.name == name:
-                return True
-
-        return False
-
-    def addVariable(self, drivingVariable: DrivingVariable):
-        self.variables.append(drivingVariable)
-
-    # TODO
-    def copy(self):
-        assert False
-
-
+from Driving.DrivingVariableContainer import DrivingVariableContainer
 
 class DrivingDescriptor(object):
     def __init__(self):
