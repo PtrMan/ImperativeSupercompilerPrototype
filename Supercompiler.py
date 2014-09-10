@@ -62,8 +62,7 @@ class DrivingGraphAssignmentElement(DrivingGraphElement):
 
 
 
-class EnumBuildinType:
-    INT = 0
+
 
 from Driving.DrivingValue import DrivingValue
 
@@ -201,7 +200,7 @@ class Supercompiler(object):
                         drivingVariable.name = leftSideVariableName
                         drivingVariable.value = DrivingValue(EnumTypeNature.BUILDIN)
                         # TODO< type depends on left hand side type >
-                        drivingVariable.value.buildinType = EnumBuildinType.INT
+                        drivingVariable.value.boundTypeInformation.buildinType = EnumBuildinType.INT
                         drivingVariable.value.constness = EnumDrivingVariableConstness.CONSTANT
 
                         iterationDrivingDescriptor.variableContainer.addVariable(drivingVariable)

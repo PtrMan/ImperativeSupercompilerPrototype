@@ -1,25 +1,22 @@
 from Driving.EnumTypeNature import EnumTypeNature
 from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
+from Driving.BoundTypeInformation import BoundTypeInformation
 
 # TODO< how to handle residuals and non residuals ??? >
 class DrivingValue(object):
     def __init__(self, typeNature: EnumTypeNature):
-        self.typeNature = typeNature
-        self.buildinType = None  # only valid if self.typeNature == EnumBuildinType.BUILDIN
+        self.boundTypeInformation = BoundTypeInformation(typeNature)
         self.constness = EnumDrivingVariableConstness.INVALID
         self.objectValues = None
         self.buildinValue = None
 
     ## gets this object/value as a disjunct object which seperates type information and the value
     #
-    # this is later needed because copying the whole object is no solution, because most information is redudant (all up to the value)
     def getAsDisjuctTypeValue(self):
-        # for simplicity we just return a copy
-        return self._copy()
-
-    def _copy(self):
         result = DrivingValue(self.typeNature)
-        result.buildinType = self.buildinType
+        # bound type information is not copied because even referenced values don't change their type
+        # the type is changed with the construction of a new value
+        result.boundTypeInformation = self.boundTypeInformation
         result.constness = self.constness
 
         if result.objectValues == None:
