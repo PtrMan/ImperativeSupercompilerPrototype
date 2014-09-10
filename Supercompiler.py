@@ -60,6 +60,12 @@ class EnumAbstractSyntaxTreeNodeType(object):
     IDENTIFIER = 7
     SEQUENCE = 8
 
+class EnumBinaryOperationType:
+    ADD = 0
+    SUB = 1
+    MUL = 2
+    DIV = 3
+
 class AbstractSyntaxTreeNode(object):
     def __init__(self, type):
         self.type = type
@@ -99,6 +105,16 @@ class AssignmentAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
 
         self.leftSide = None # instance of AbstractSyntaxTreeNode
         self.rightSide = None # instance of AbstractSyntaxTreeNode
+
+class AssignmentOperationAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
+    def __init__(self, operation: EnumBinaryOperationType):
+        super(AssignmentOperationAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION)
+
+        self.operation = operation
+
+        self.leftSide = None # instance of AbstractSyntaxTreeNode
+        self.rightSide = None # instance of AbstractSyntaxTreeNode
+
 
 class ConstantAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
     def __init__(self):
@@ -364,14 +380,25 @@ class Supercompiler(object):
 
 supercompiler = Supercompiler()
 supercompiler._ast = SequenceAbstractSyntaxTreeNode()
+
 supercompiler._ast.childrens.append(AssignmentAbstractSyntaxTreeNode())
 supercompiler._ast.childrens[0].leftSide = IdentifierAbstractSyntaxTreeNode("a")
 supercompiler._ast.childrens[0].rightSide = ConstantAbstractSyntaxTreeNode()
 supercompiler._ast.childrens[0].rightSide.value = 5
+
 supercompiler._ast.childrens.append(AssignmentAbstractSyntaxTreeNode())
 supercompiler._ast.childrens[1].leftSide = IdentifierAbstractSyntaxTreeNode("b")
 supercompiler._ast.childrens[1].rightSide = ConstantAbstractSyntaxTreeNode()
 supercompiler._ast.childrens[1].rightSide.value = 0
+
+supercompiler._ast.childrens.append(LoopAbstractSyntaxTreeNode())
+
+supercompiler._ast.childrens[2].childrens.append(AssignmentOperationAbstractSyntaxTreeNode(EnumBinaryOperationType.ADD))
+
+supercompiler._ast.childrens[2].childrens[0].leftSide = IdentifierAbstractSyntaxTreeNode("b")
+supercompiler._ast.childrens[2].childrens[0].rightSide = IdentifierAbstractSyntaxTreeNode("a")
+
+supercompiler._ast.childrens[2].childrens.append(ContinueAbstractSyntaxTreeNode())
 
 
 #supercompiler._ast = LoopAbstractSyntaxTreeNode()
