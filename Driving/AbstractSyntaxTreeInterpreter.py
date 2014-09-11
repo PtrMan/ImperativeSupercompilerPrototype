@@ -23,7 +23,9 @@ class AbstractSyntaxTreeInterpreter(object):
 
             lookedupVariable = variables.lookupVariableByName(node.name)
 
-            return InterpretedResultValue(lookedupVariable)
+            interpretedResultValue = InterpretedResultValue(lookedupVariable)
+            interpretedResultValue.boundedVariableName = node.name
+            return interpretedResultValue
 
         elif node.type == EnumAbstractSyntaxTreeNodeType.BINARYOPERATION or node.type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
             leftSideResult = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(node.leftSide, variables, typeOperationPolicy)
@@ -44,7 +46,17 @@ class AbstractSyntaxTreeInterpreter(object):
             resultValue = typeOperationPolicy.getValueOfBinaryOperation(leftSideResult.value.value, rightSideResult.value.value, node.operationType)
 
             # return result as InterpretedResultValue
-            return InterpretedResultValue(resultValue)
+            interpretedResultValue = InterpretedResultValue(resultValue)
+            if isWithAssignment:
+                if leftSideResult.boundedVariableName == None:
+                    # TODO< string of operation >
+                    raise InterpretationException("left side of binary operation with assignment TODO must a variable")
+
+                leftSideVariableName = leftSideResult.boundedVariableName
+
+                interpretedResultValue.boundedVariableName = leftSideVariableName
+
+            return interpretedResultValue
 
         elif node.type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENT:
             if node.leftSide.type != EnumAbstractSyntaxTreeNodeType.IDENTIFIER:

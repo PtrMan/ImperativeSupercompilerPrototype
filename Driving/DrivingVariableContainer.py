@@ -22,6 +22,18 @@ class DrivingVariableContainer(object):
 
         return False
 
+    def setVariableByName(self, name: str, variable: DrivingVariable):
+        assert self.existVariableByName(name)
+
+        for iterationVariable in self.variables:
+            if iterationVariable.name == name:
+                iterationVariable.value = variable
+
+                return
+
+        # actually only needed for list version
+        assert False
+
     def addVariable(self, drivingVariable: DrivingVariable):
         self.variables.append(drivingVariable)
 

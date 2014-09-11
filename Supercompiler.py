@@ -219,12 +219,12 @@ class Supercompiler(object):
 
 
                     # write out the done variable assignment
-                    self._drivingGraph.addElement(GraphElement(DrivingGraphAssignmentElement()))
-                    newOutputgraphIndex = len(self._drivingGraph.elements)-1
-                    self._drivingGraph.elements[iterationDrivingDescriptor.outputGraphIndex].childIndices.append(newOutputgraphIndex)
 
-                    self._drivingGraph.elements[newOutputgraphIndex].content.leftVariableName = leftSideVariableName
-                    self._drivingGraph.elements[newOutputgraphIndex].content.rightExpression = ConstantExpression(rightSideConstantValue)
+                    # write out the assigned variable
+                    # NOTE< is it correct to give the whole path in
+                    #       actually we want to assign te new value to a residual variable and the variable itself if it is a non-BUILDIN
+                    #     >
+                    self._writeoutVariableAssignment([leftSideVariableName], drivingVariable.value, iterationDrivingDescriptor.outputGraphIndex)
                 else:
                     # TODO< throw exception
                     assert False
@@ -236,9 +236,18 @@ class Supercompiler(object):
 
                 interpretedResultValue = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(currentNode, iterationDrivingDescriptor.variableContainer, self._typeOperationPolicy)
 
-                # TODO< assert on assignment and assign variable >
+                # assert on assignment
+                assert interpretedResultValue.boundedVariableName != None
 
-                # TODO< write out the assigned variable >
+                # assign variable
+                # TODO< concrete path to the variable, because of arrays, oop, etc >
+                self._assignValueToVariable([interpretedResultValue.boundedVariableName], interpretedResultValue.value, iterationDrivingDescriptor.variableContainer)
+
+                # write out the assigned variable
+                # NOTE< is it correct to give the whole path in
+                #       actually we want to assign te new value to a residual variable and the variable itself if it is a non-BUILDIN
+                #     >
+                self._writeoutVariableAssignment([interpretedResultValue.boundedVariableName], interpretedResultValue.value, iterationDrivingDescriptor.outputGraphIndex)
 
                 iterationDrivingDescriptor.astElementIndex += 1
 
@@ -247,6 +256,42 @@ class Supercompiler(object):
 
             drivingDescriptorIndex += 1
 
+    ## assigns a value to a variable
+    #
+    # depending on the language policy this does
+    # * check if the variable exists
+    # * checks if the types are compatible
+    # * eventually cast it if types are compatiable but not equal
+    # for the final assignment
+    def _assignValueToVariable(self, variablePath: [{str, int}], value: DrivingValue, variableContainer: DrivingVariableContainer):
+        # TODO< ask language policy about typing and conversion >
+
+        # for now the path must be one element long
+        assert len(variablePath) == 1
+
+        # NOTE< for now we assign values even to unknown variables, this is python style and not compatible with c#, java, etc >
+
+        if variableContainer.existVariableByName(variablePath[0]):
+            variableContainer.setVariableByName(variablePath[0], value)
+        else:
+            createdVariable = DrivingVariable()
+            createdVariable.name = variablePath[0]
+            createdVariable.value = value
+            variableContainer.addVariable(createdVariable)
+
+    def _writeoutVariableAssignment(self, variablePath: [{str, int}], value: DrivingValue, outputGraphIndex: int):
+        # for now the path must be one element long
+        assert len(variablePath) == 1
+
+        self._drivingGraph.addElement(GraphElement(DrivingGraphAssignmentElement()))
+        newOutputgraphIndex = len(self._drivingGraph.elements)-1
+        self._drivingGraph.elements[outputGraphIndex].childIndices.append(newOutputgraphIndex)
+
+        self._drivingGraph.elements[newOutputgraphIndex].content.leftVariableName = variablePath[0]
+
+        # for now it must be a buildin value
+        assert value.boundTypeInformation.typeNature == EnumTypeNature.BUILDIN
+        self._drivingGraph.elements[newOutputgraphIndex].content.rightExpression = ConstantExpression(value.buildinValue)
 
 # example without parser
 from AbstractSyntaxTree.SequenceAbstractSyntaxTreeNode import SequenceAbstractSyntaxTreeNode
