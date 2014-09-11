@@ -24,27 +24,29 @@ class AbstractSyntaxTreeInterpreter(object):
             lookedupVariable = variables.lookupVariableByName(node.name)
 
             return InterpretedResultValue(lookedupVariable)
-        elif node.type == EnumAbstractSyntaxTreeNodeType.BINARYOPERATION:
+
+        elif node.type == EnumAbstractSyntaxTreeNodeType.BINARYOPERATION or node.type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
             leftSideResult = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(node.leftSide, variables, typeOperationPolicy)
             rightSideResult = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(node.leftSide, variables, typeOperationPolicy)
 
-            leftSideType = leftSideResult.value.boundTypeInformation
-            rightSideType = rightSideResult.value.boundTypeInformation
+            leftSideType = leftSideResult.value.value.boundTypeInformation
+            rightSideType = rightSideResult.value.value.boundTypeInformation
 
-            # TODO< refactor flag to enum >
+            isWithAssignment = node.type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION
+
             # check if binary operation is allowed with the types
-            isOperationUnderPolicyAllowed = typeOperationPolicy.isBinaryOperationAllowed(leftSideType, rightSideType, node.operationType, False)
+            isOperationUnderPolicyAllowed = typeOperationPolicy.isBinaryOperationAllowed(leftSideType, rightSideType, node.operationType, isWithAssignment)
             if not isOperationUnderPolicyAllowed:
                 # TODO< get type string of the two variables >
                 raise InterpretationException("Binary operation using types TODO and TODO is invalid!")
 
             # get result of the operation using the policy
-            resultValue = typeOperationPolicy.getValueOfBinaryOperation(leftSideResult.value, rightSideResult.value, node.operationType)
+            resultValue = typeOperationPolicy.getValueOfBinaryOperation(leftSideResult.value.value, rightSideResult.value.value, node.operationType)
 
             # return result as InterpretedResultValue
             return InterpretedResultValue(resultValue)
 
-        elif node.type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
+        elif node.type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENT:
             if node.leftSide.type != EnumAbstractSyntaxTreeNodeType.IDENTIFIER:
                 raise InterpretationException("identifier on the left side of an ASSIGNMENTOPERATION expected!")
 
@@ -55,5 +57,6 @@ class AbstractSyntaxTreeInterpreter(object):
             result.boundedVariableName = node.leftSide.name
 
             return result
+
         else:
             raise InterpretationException("Unsupported AbstractSyntaxTree element for Interpretation!")

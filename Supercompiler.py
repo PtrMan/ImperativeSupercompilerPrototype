@@ -92,6 +92,13 @@ class DrivingDescriptor(object):
 
         return createdDescriptor
 
+from Driving.AbstractSyntaxTreeInterpreter import AbstractSyntaxTreeInterpreter
+from Driving.Java.JavaTypeOperationPolicy import JavaTypeOperationPolicy
+from AbstractSyntaxTree.EnumAbstractSyntaxTreeNodeType import EnumAbstractSyntaxTreeNodeType
+from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
+from Driving.EnumTypeNature import EnumTypeNature
+from Driving.EnumBuildinType import EnumBuildinType
+from Driving.DrivingVariable import DrivingVariable
 
 class Supercompiler(object):
     def __init__(self):
@@ -101,6 +108,9 @@ class Supercompiler(object):
 
         # for driving
         self._drivingDescriptors = []
+
+        # class inherited from Driving.ITypeOperationPolicy
+        self._typeOperationPolicy = None
 
     def _drive(self):
         self._drivingGraph.resetGraph()
@@ -221,6 +231,17 @@ class Supercompiler(object):
 
                 iterationDrivingDescriptor.astElementIndex += 1
 
+            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
+                currentNode = iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex]
+
+                interpretedResultValue = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(currentNode, iterationDrivingDescriptor.variableContainer, self._typeOperationPolicy)
+
+                # TODO< assert on assignment and assign variable >
+
+                # TODO< write out the assigned variable >
+
+                iterationDrivingDescriptor.astElementIndex += 1
+
             else:
                 assert False
 
@@ -268,6 +289,8 @@ supercompiler._drivingDescriptors.append(DrivingDescriptor())
 supercompiler._drivingDescriptors[0].astElement = supercompiler._ast
 supercompiler._drivingDescriptors[0].astElementIndex = 0
 supercompiler._drivingDescriptors[0].outputGraphIndex = 0
+
+supercompiler._typeOperationPolicy = JavaTypeOperationPolicy()
 
 supercompiler._drive()
 

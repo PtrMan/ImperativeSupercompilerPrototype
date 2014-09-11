@@ -18,8 +18,8 @@ class JavaTypeOperationPolicy(ITypeOperationPolicy):
             return False
 
     def getValueOfBinaryOperation(self, leftSide: DrivingValue, rightSide: DrivingValue, operationType: EnumBinaryOperationType) -> DrivingValue:
-        if leftSide.typeNature == EnumTypeNature.BUILDIN and rightSide.typeNature == EnumTypeNature.BUILDIN:
-            if leftSide.buildinType == EnumBuildinType.INT and leftSide.buildinType == EnumBuildinType.INT:
+        if leftSide.boundTypeInformation.typeNature == EnumTypeNature.BUILDIN and rightSide.boundTypeInformation.typeNature == EnumTypeNature.BUILDIN:
+            if leftSide.boundTypeInformation.buildinType == EnumBuildinType.INT and leftSide.boundTypeInformation.buildinType == EnumBuildinType.INT:
                 resultRawValue = 0
 
                 if operationType == EnumBinaryOperationType.ADD:
