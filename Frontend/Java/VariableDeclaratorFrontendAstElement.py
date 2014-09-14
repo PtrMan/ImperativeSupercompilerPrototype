@@ -6,7 +6,7 @@ class VariableDeclaratorFrontendAstElement(FrontendAstElement):
     def __init__(self, data):
         super(VariableDeclaratorFrontendAstElement, self).__init__(EnumFrontendAstElementType.VARIABALEDECLARATOR)
 
-        self.declarationVariablename = data[0]
+        self.declarationVariablenameIdentifier = data[0]
 
         self.hasBrackets = False
         self.variableInitializer = None # is None if no initializer was given

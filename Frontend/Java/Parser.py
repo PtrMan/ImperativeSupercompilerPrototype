@@ -1,9 +1,13 @@
 from Libs.pyparsing import Literal, alphas, Word, delimitedList, Optional, ZeroOrMore, Forward, oneOf, nums, FollowedBy, OneOrMore
-from Frontend.Java.VariableIdentifierFrontendAstElement import VariableIdentifierFrontendAstElement
+from Frontend.Java.IdentifierFrontendAstElement import IdentifierFrontendAstElement
 from Frontend.Java.BinaryOperationFrontendAstElement import BinaryOperationFrontendAstElement
 from Frontend.Java.JavaTypeFrontendAstElement import JavaTypeFrontendAstElement
 from Frontend.Java.VariableDeclaratorFrontendAstElement import VariableDeclaratorFrontendAstElement
 from Frontend.Java.VariableInitializerFrontendAstElement import VariableInitializerFrontendAstElement
+from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarationFrontendAstElement
+from Frontend.Java.ModifierFrontendAstElement import ModifierFrontendAstElement
+
+from Frontend.Java.TreeRewrite.TreeRewriter import TreeRewriter
 
 class Parser(object):
     def __init__(self):
@@ -43,7 +47,7 @@ class Parser(object):
             Literal("abstract") | \
             Literal("threadsafe") | \
             Literal("transient")
-
+        modifier.setParseAction(ModifierFrontendAstElement)
 
 
         variableInitializerNonforward = (Literal("{") + delimitedList(expression, delim=",") + Optional(Literal(",")) + Literal("}")) | expression
@@ -54,7 +58,9 @@ class Parser(object):
         variableDeclarator = identifier + Optional(Literal("[") + Literal("]")) + Optional(Literal("=") + variableInitializer)
         variableDeclarator.setParseAction(VariableDeclaratorFrontendAstElement)
 
-        variableDeclaration = Optional(modifier) + javaType + variableDeclarator + Literal(";")
+        # TODO< multiple declarations >
+        # TODO< maybe the action must be modified >
+        variableDeclaration = ZeroOrMore(modifier) + javaType + variableDeclarator + Literal(";")
         variableDeclaration.setParseAction(VariableDeclarationFrontendAstElement)
 
         # is this actually correct because int[] a[] is possible?
@@ -69,7 +75,7 @@ class Parser(object):
 
         # indicates access to a variable
         variableIdentifier = identifier
-        variableIdentifier.setParseAction(VariableIdentifierFrontendAstElement)
+        variableIdentifier.setParseAction(IdentifierFrontendAstElement)
 
         # TODO< can also be a chained oop thingy, array accesses and so on >
         expressionLeft = variableIdentifier
@@ -132,7 +138,7 @@ class Parser(object):
 
         a = variableDeclaration.parseString("int a;")[0]
 
-
+        listi = TreeRewriter.rewriteVariableDeclaration(a)
 
         # expression and stuff
         parseTree = expression.parseString("aa+bb*cc")[0]

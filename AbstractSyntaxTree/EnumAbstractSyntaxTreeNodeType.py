@@ -10,3 +10,4 @@ class EnumAbstractSyntaxTreeNodeType(object):
     SEQUENCE = 8
     ASSIGNMENTOPERATION = 9
     BINARYOPERATION = 10
+    VARIABLEDECLARATION = 11
