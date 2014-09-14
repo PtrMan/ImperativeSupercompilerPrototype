@@ -3,3 +3,4 @@ class EnumBinaryOperationType(object):
     SUB = 1
     MUL = 2
     DIV = 3
+    ASSIGNMENT = 4

@@ -7,3 +7,5 @@ class EnumFrontendAstElementType(object):
     VARIABALEDECLARATIONS = 5
     MODIFIER = 6
     INTEGERLITERAL = 7
+    ASSIGNMENT = 8
+    TAKEFIRST = 9

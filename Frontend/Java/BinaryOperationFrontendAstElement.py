@@ -19,7 +19,10 @@ class BinaryOperationFrontendAstElement(FrontendAstElement):
             "-" : (EnumBinaryOperationType.SUB, False),
             "-=" : (EnumBinaryOperationType.SUB, True),
             "*" : (EnumBinaryOperationType.MUL, False),
-            "*=" : (EnumBinaryOperationType.MUL, True)
+            "*=" : (EnumBinaryOperationType.MUL, True),
+            "/" : (EnumBinaryOperationType.DIV, False),
+            "/=" : (EnumBinaryOperationType.DIV, True),
+            "=" : (EnumBinaryOperationType.ASSIGNMENT, True),
             # TODO< more >
         }
 

@@ -2,6 +2,8 @@ from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarat
 from Frontend.Java.FrontendAstElement import FrontendAstElement
 from Frontend.Java.EnumFrontendAstElementType import EnumFrontendAstElementType
 from Frontend.Java.JavaTypeFrontendAstElement import JavaTypeFrontendAstElement
+from Frontend.Java.BinaryOperationFrontendAstElement import BinaryOperationFrontendAstElement
+from Frontend.Java.TakeFirstAstElement import TakeFirstAstElement
 
 from Driving.BoundTypeInformation import BoundTypeInformation
 from Driving.EnumTypeNature import EnumTypeNature
@@ -10,6 +12,7 @@ from AbstractSyntaxTree.AbstractSyntaxTreeNode import AbstractSyntaxTreeNode
 from AbstractSyntaxTree.IdentifierAbstractSyntaxTreeNode import IdentifierAbstractSyntaxTreeNode
 from AbstractSyntaxTree.BinaryOperationAbstractSyntaxTreeNode import BinaryOperationAbstractSyntaxTreeNode
 from AbstractSyntaxTree.IntegerLiteralSyntaxTreeNode import IntegerLiteralSyntaxTreeNode
+from AbstractSyntaxTree.EnumBinaryOperationType import EnumBinaryOperationType
 
 from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
 
@@ -17,6 +20,24 @@ from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import Variabl
 #
 # is necessary because only with this the Supercompiler can work on a General AST while the Frontend Parts can work on language specific representations
 class TreeRewriter(object):
+    @staticmethod
+    def rewriteSingleElement(astElement: FrontendAstElement) -> AbstractSyntaxTreeNode:
+        if astElement.type == EnumFrontendAstElementType.TAKEFIRST:
+            return TreeRewriter._rewriteTakeFirst(astElement)
+        elif astElement.type == EnumFrontendAstElementType.BINARYOPERATION:
+            return TreeRewriter._rewriteBinaryOperation(astElement)
+        else:
+            # TODO< raise exception >
+            assert False
+
+    @staticmethod
+    def _rewriteTakeFirst(takeFirst: TakeFirstAstElement) -> AbstractSyntaxTreeNode:
+        return TreeRewriter.rewriteSingleElement(takeFirst.element)
+
+    @staticmethod
+    def _rewriteBinaryOperation(binaryOperationJavaAst: BinaryOperationFrontendAstElement) -> BinaryOperationAbstractSyntaxTreeNode:
+        return TreeRewriter._convertJavaAstExpressionToGeneralAst(binaryOperationJavaAst)
+
     # rewrites an VariableDeclarationFrontendAstElement to one or many assignment statements
     # the array initialisators are rewritten too
     @staticmethod
@@ -57,9 +78,15 @@ class TreeRewriter(object):
             convertedLeftElement = TreeRewriter._convertJavaAstExpressionToGeneralAst(astElement.leftElement)
             convertedRightElement = TreeRewriter._convertJavaAstExpressionToGeneralAst(astElement.rightElement)
 
-            operationIsWithoutAssignment = not astElement.isAssignment
+            if astElement.isAssignment:
+                # allow only raw assignments without an operation
+                if astElement.operationType == EnumBinaryOperationType.ASSIGNMENT:
+                    resultNode = BinaryOperationAbstractSyntaxTreeNode(astElement.operationType)
+                    resultNode.leftSide = convertedLeftElement
+                    resultNode.rightSide = convertedRightElement
 
-            if not operationIsWithoutAssignment:
+                    return resultNode
+
                 # TODO< allow and translate somehow binary assignments >
                 # TODO< raise Exception "Binary operations with assignment are not allowed" >
                 assert False

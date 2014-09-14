@@ -7,6 +7,7 @@ from Frontend.Java.VariableInitializerFrontendAstElement import VariableInitiali
 from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarationFrontendAstElement
 from Frontend.Java.ModifierFrontendAstElement import ModifierFrontendAstElement
 from Frontend.Java.IntegerLiteralAstElement import IntegerLiteralAstElement
+from Frontend.Java.TakeFirstAstElement import TakeFirstAstElement
 
 from Frontend.Java.TreeRewrite.TreeRewriter import TreeRewriter
 
@@ -88,6 +89,9 @@ class Parser(object):
         binaryNumericExpressionPriorityLow = expressionLeft + oneOf("+ += - -= % %=") + expression
         binaryNumericExpressionPriorityLow.setParseAction(BinaryOperationFrontendAstElement)
 
+        assignmentExpression = expressionLeft + Literal("=") + expression
+        assignmentExpression.setParseAction(BinaryOperationFrontendAstElement)
+
         numericExpression = \
             binaryNumericExpressionPriorityHigh | \
             binaryNumericExpressionPriorityLow | \
@@ -110,6 +114,7 @@ class Parser(object):
 
         # splited from expression because it can't like it if it is in expression
         expressionNonforward = \
+            assignmentExpression | \
             expressionLeft + Literal("[") + expression + Literal("]") | \
             literalExpression | \
             numericExpression | \
@@ -125,11 +130,12 @@ class Parser(object):
 
         expression << expressionNonforward
 
-
+        expressionFollowedBySemicolon = expression + Literal(";")
+        expressionFollowedBySemicolon.setParseAction(TakeFirstAstElement)
 
         statement = \
             variableDeclaration | \
-            expression + Literal(";")
+            expressionFollowedBySemicolon
 
         terminatedStatements = ZeroOrMore(statement)
 
@@ -141,8 +147,9 @@ class Parser(object):
         a = variableDeclaration.parseString("int a=b;")[0]
 
         a = statement.parseString("int a = 0;")[0]
+        a = terminatedStatements.parseString("a = 0;")
 
-        listi = TreeRewriter.rewriteVariableDeclaration(a)
+        listi = TreeRewriter.rewriteSingleElement(a[0])
 
         # just for testing
         return listi
