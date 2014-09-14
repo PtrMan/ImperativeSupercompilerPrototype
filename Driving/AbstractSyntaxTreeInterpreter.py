@@ -4,9 +4,8 @@ from Exceptions.InterpretationException import InterpretationException
 from Driving.InterpretedResultValue import InterpretedResultValue
 from Driving.DrivingVariableContainer import DrivingVariableContainer
 from Driving.ITypeOperationPolicy import ITypeOperationPolicy
-from Driving.DrivingVariable import DrivingVariable
 from Driving.DrivingValue import DrivingValue
-from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
+from Driving.EnumTypeNature import EnumTypeNature
 
 ## Interprets Nodes from the abstract syntax tree
 #
@@ -72,5 +71,13 @@ class AbstractSyntaxTreeInterpreter(object):
             result.boundedVariableName = node.leftSide.name
 
             return result
+
+        elif node.type == EnumAbstractSyntaxTreeNodeType.INTEGERLITERAL:
+            value = DrivingValue(EnumTypeNature.BUILDIN)
+            value.boundTypeInformation.buildinType = "int"
+            value.buildinValue = node.integer
+
+            return InterpretedResultValue(value)
+
         else:
             raise InterpretationException("Unsupported AbstractSyntaxTree element for Interpretation!")

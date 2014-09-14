@@ -9,6 +9,7 @@ from Driving.EnumTypeNature import EnumTypeNature
 from AbstractSyntaxTree.AbstractSyntaxTreeNode import AbstractSyntaxTreeNode
 from AbstractSyntaxTree.IdentifierAbstractSyntaxTreeNode import IdentifierAbstractSyntaxTreeNode
 from AbstractSyntaxTree.BinaryOperationAbstractSyntaxTreeNode import BinaryOperationAbstractSyntaxTreeNode
+from AbstractSyntaxTree.IntegerLiteralSyntaxTreeNode import IntegerLiteralSyntaxTreeNode
 
 from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
 
@@ -72,8 +73,10 @@ class TreeRewriter(object):
         elif astElement.type == EnumFrontendAstElementType.IDENTIFIER:
             return IdentifierAbstractSyntaxTreeNode(astElement.identifierAsString)
 
+        elif astElement.type == EnumFrontendAstElementType.INTEGERLITERAL:
+            return IntegerLiteralSyntaxTreeNode(astElement.integer)
 
-        # TODO< numeric literal >
+
         else:
             # TODO< raise exception >
             assert False

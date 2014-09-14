@@ -11,3 +11,4 @@ class EnumAbstractSyntaxTreeNodeType(object):
     ASSIGNMENTOPERATION = 9
     BINARYOPERATION = 10
     VARIABLEDECLARATION = 11
+    INTEGERLITERAL = 12

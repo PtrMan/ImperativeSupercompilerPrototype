@@ -6,3 +6,4 @@ class EnumFrontendAstElementType(object):
     VARIABALEINITIALIZER = 4
     VARIABALEDECLARATIONS = 5
     MODIFIER = 6
+    INTEGERLITERAL = 7

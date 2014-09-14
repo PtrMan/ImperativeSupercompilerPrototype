@@ -6,6 +6,7 @@ from Frontend.Java.VariableDeclaratorFrontendAstElement import VariableDeclarato
 from Frontend.Java.VariableInitializerFrontendAstElement import VariableInitializerFrontendAstElement
 from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarationFrontendAstElement
 from Frontend.Java.ModifierFrontendAstElement import ModifierFrontendAstElement
+from Frontend.Java.IntegerLiteralAstElement import IntegerLiteralAstElement
 
 from Frontend.Java.TreeRewrite.TreeRewriter import TreeRewriter
 
@@ -22,6 +23,7 @@ class Parser(object):
 
         # TODO< after spec >
         integerLiteral = Word(nums)
+        integerLiteral.setParseAction(IntegerLiteralAstElement)
 
         allDatatypes = identifier
 
@@ -137,6 +139,8 @@ class Parser(object):
         b = variableInitializer.parseString("{aa,bb}")[0]
 
         a = variableDeclaration.parseString("int a=b;")[0]
+
+        a = statement.parseString("int a = 0;")[0]
 
         listi = TreeRewriter.rewriteVariableDeclaration(a)
 
