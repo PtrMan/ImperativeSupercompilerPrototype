@@ -10,5 +10,5 @@ class VariableDeclarationAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
         self.boundType = boundType # type is BoundTypeInformation, must be defined
         self.variableName = variableName # str: is the variablename, must be defined
 
-        self.rightside = None # is a DrivingGraphEpression, can be defined
+        self.rightSide = None # is a DrivingGraphEpression, can be defined
 

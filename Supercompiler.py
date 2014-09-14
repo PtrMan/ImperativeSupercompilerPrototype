@@ -95,10 +95,13 @@ class DrivingDescriptor(object):
 from Driving.AbstractSyntaxTreeInterpreter import AbstractSyntaxTreeInterpreter
 from Driving.Java.JavaTypeOperationPolicy import JavaTypeOperationPolicy
 from AbstractSyntaxTree.EnumAbstractSyntaxTreeNodeType import EnumAbstractSyntaxTreeNodeType
+from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
 from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
 from Driving.EnumTypeNature import EnumTypeNature
 from Driving.EnumBuildinType import EnumBuildinType
 from Driving.DrivingVariable import DrivingVariable
+
+from Exceptions.DrivingException import DrivingException
 
 class Supercompiler(object):
     def __init__(self):
@@ -226,8 +229,7 @@ class Supercompiler(object):
                     #     >
                     self._writeoutVariableAssignment([leftSideVariableName], drivingVariable.value, iterationDrivingDescriptor.outputGraphIndex)
                 else:
-                    # TODO< throw exception
-                    assert False
+                    raise DrivingException("Constant expected")
 
                 iterationDrivingDescriptor.astElementIndex += 1
 
@@ -251,10 +253,59 @@ class Supercompiler(object):
 
                 iterationDrivingDescriptor.astElementIndex += 1
 
-            else:
-                assert False
+            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.VARIABLEDECLARATION:
+                self._interpretVariableDeclaration(iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex], iterationDrivingDescriptor)
+
 
             drivingDescriptorIndex += 1
+
+    def _interpretVariableDeclaration(self, variableDeclarationNode: VariableDeclarationAbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor):
+        # NOTE< only imperative languages where declaration of variables is necessary use this code >
+
+        # TODO< lookup the top variablecontainer
+        #       for now we take the only variable container >
+        topVariableContainer = drivingDescriptor.variableContainer
+
+        if topVariableContainer.existVariableByName(variableDeclarationNode.variableName):
+            raise DrivingException("Variable definition for variable {0} redefines allready defined variable!".format(variableDeclarationNode.variableName))
+
+        self._declareVariable(variableDeclarationNode.variableName, topVariableContainer)
+
+        if variableDeclarationNode.rightSide != None:
+            # interpret the right side
+            resultOnRightSide = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(variableDeclarationNode.rightSide, topVariableContainer, self._typeOperationPolicy)
+
+            assignedVariable = DrivingVariable()
+            assignedVariable.name = variableDeclarationNode.variableName
+            assignedVariable.value = resultOnRightSide
+
+            self._assignValueToVariable([variableDeclarationNode.variableName], assignedVariable, topVariableContainer)
+
+            # TODO< writeout the variable assignment >
+            x = 0
+
+        drivingDescriptor.astElementIndex += 1
+
+
+    # TODO< some mechanism to walk the scopes while searching for the variable
+    #       and creation of one if the variable was not found,
+    #       or storing it in the top scope >
+
+    def _declareVariable(self, variableName: str, variableContainer: DrivingVariableContainer):
+        # is a declaration, can't happen in languages like python
+
+        # a declaration to a variable which exists allready in the scope is invalid
+        if variableContainer.existVariableByName(variableName):
+            raise DrivingException("Variable definition for variable {0} redefines allready defined variable!".format(variableName))
+
+        createdVariable = DrivingVariable()
+        createdVariable.name = variableName
+        createdVariable.value = None
+        variableContainer.addVariable(createdVariable)
+
+    # TODO< some mechanism to walk the scopes while searching for the variable
+    #       and creation of one if the variable was not found,
+    #       or storing it in the top scope >
 
     ## assigns a value to a variable
     #
@@ -270,6 +321,7 @@ class Supercompiler(object):
         assert len(variablePath) == 1
 
         # NOTE< for now we assign values even to unknown variables, this is python style and not compatible with c#, java, etc >
+        # TODO< ask language policy about semantics of variable assignment to not jet defined variables >
 
         if variableContainer.existVariableByName(variablePath[0]):
             variableContainer.setVariableByName(variablePath[0], value)
@@ -307,6 +359,13 @@ from AbstractSyntaxTree.EnumBinaryOperationType import EnumBinaryOperationType
 supercompiler = Supercompiler()
 supercompiler._ast = SequenceAbstractSyntaxTreeNode()
 
+from Frontend.Java.Parser import Parser
+
+parser = Parser()
+
+supercompiler._ast.childrens = parser._init()
+
+"""
 supercompiler._ast.childrens.append(AssignmentAbstractSyntaxTreeNode())
 supercompiler._ast.childrens[0].leftSide = IdentifierAbstractSyntaxTreeNode("a")
 supercompiler._ast.childrens[0].rightSide = ConstantAbstractSyntaxTreeNode()
@@ -329,6 +388,7 @@ supercompiler._ast.childrens[2].childrens.append(ContinueAbstractSyntaxTreeNode(
 
 #supercompiler._ast = LoopAbstractSyntaxTreeNode()
 #supercompiler._ast.childrens.append(ContinueAbstractSyntaxTreeNode())
+"""
 
 supercompiler._drivingDescriptors.append(DrivingDescriptor())
 supercompiler._drivingDescriptors[0].astElement = supercompiler._ast
@@ -341,13 +401,15 @@ supercompiler._drive()
 
 # simple example todo
 
-# a = 5
-# b = 0
-# while True:
-#    if a == 0:
+# int a = 5;
+# int b = 0;
+#
+# while(True) {
+#    if (a == 0)
 #       break
-#    b += a
-#    a -= 1
+#    b += a;
+#    a -= 1;
+# }
 
 # results in
 # a = 5

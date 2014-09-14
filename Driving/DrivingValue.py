@@ -10,6 +10,19 @@ class DrivingValue(object):
         self.objectValues = None
         self.buildinValue = None
 
+    @staticmethod
+    def createWithGivenBoundTypeInformation(boundTypeInformation: BoundTypeInformation):
+        createdDrivingValue = DrivingValue(None)
+
+        createdDrivingValue.boundTypeInformation = boundTypeInformation
+        createdDrivingValue.constness = EnumDrivingVariableConstness.INVALID
+        createdDrivingValue.objectValues = None
+        createdDrivingValue.buildinValue = None
+
+        return createdDrivingValue
+
+
+
     ## gets this object/value as a disjunct object which seperates type information and the value
     #
     def getAsDisjuctTypeValue(self):

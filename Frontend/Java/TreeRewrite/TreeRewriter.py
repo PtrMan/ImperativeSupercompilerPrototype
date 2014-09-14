@@ -6,9 +6,9 @@ from Frontend.Java.JavaTypeFrontendAstElement import JavaTypeFrontendAstElement
 from Driving.BoundTypeInformation import BoundTypeInformation
 from Driving.EnumTypeNature import EnumTypeNature
 
-from DrivingGraphExpressions.Expression import Expression as DrivingGraphExpression
-from DrivingGraphExpressions.BinaryExpression import BinaryExpression as DrivingGraphBinaryExpression
-from DrivingGraphExpressions.VariableIdentifierExpression import VariableIdentifierExpression as DrivingGraphVariableIdentifierExpression
+from AbstractSyntaxTree.AbstractSyntaxTreeNode import AbstractSyntaxTreeNode
+from AbstractSyntaxTree.IdentifierAbstractSyntaxTreeNode import IdentifierAbstractSyntaxTreeNode
+from AbstractSyntaxTree.BinaryOperationAbstractSyntaxTreeNode import BinaryOperationAbstractSyntaxTreeNode
 
 from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
 
@@ -41,20 +41,20 @@ class TreeRewriter(object):
                     assert False, "TODO"
                 else:
                     # first we translate the Java Ast for the Expression to a DrivingGraphExpression
-                    drivingGraphExpression = TreeRewriter._convertJavaAstExpressionToDrivingGraphExpression(iterationVariableDeclarator.variableInitializer.expression)
+                    drivingGraphExpression = TreeRewriter._convertJavaAstExpressionToGeneralAst(iterationVariableDeclarator.variableInitializer.expression)
 
                     # then we create a Ast Variable-Declaration and add it to the result list
-                    resultVariableDeclaration.rightside = drivingGraphExpression
+                    resultVariableDeclaration.rightSide = drivingGraphExpression
 
             resultList.append(resultVariableDeclaration)
 
         return resultList
 
     @staticmethod
-    def _convertJavaAstExpressionToDrivingGraphExpression(astElement: FrontendAstElement) -> DrivingGraphExpression:
+    def _convertJavaAstExpressionToGeneralAst(astElement: FrontendAstElement) -> AbstractSyntaxTreeNode:
         if astElement.type == EnumFrontendAstElementType.BINARYOPERATION:
-            convertedLeftElement = TreeRewriter._convertJavaAstExpressionToDrivingGraphExpression(astElement.leftElement)
-            convertedRightElement = TreeRewriter._convertJavaAstExpressionToDrivingGraphExpression(astElement.rightElement)
+            convertedLeftElement = TreeRewriter._convertJavaAstExpressionToGeneralAst(astElement.leftElement)
+            convertedRightElement = TreeRewriter._convertJavaAstExpressionToGeneralAst(astElement.rightElement)
 
             operationIsWithoutAssignment = not astElement.isAssignment
 
@@ -63,11 +63,15 @@ class TreeRewriter(object):
                 # TODO< raise Exception "Binary operations with assignment are not allowed" >
                 assert False
 
-            return DrivingGraphBinaryExpression(convertedLeftElement, convertedRightElement, astElement.operationType)
+            resultNode = BinaryOperationAbstractSyntaxTreeNode(astElement.operationType)
+            resultNode.leftSide = convertedLeftElement
+            resultNode.rightSide = convertedRightElement
+
+            return resultNode
 
         elif astElement.type == EnumFrontendAstElementType.IDENTIFIER:
-            # TODO< is the variable identifier correct ? >
-            return DrivingGraphVariableIdentifierExpression(astElement.variableName)
+            return IdentifierAbstractSyntaxTreeNode(astElement.identifierAsString)
+
 
         # TODO< numeric literal >
         else:

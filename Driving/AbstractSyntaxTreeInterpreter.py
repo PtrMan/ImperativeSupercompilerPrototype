@@ -4,6 +4,9 @@ from Exceptions.InterpretationException import InterpretationException
 from Driving.InterpretedResultValue import InterpretedResultValue
 from Driving.DrivingVariableContainer import DrivingVariableContainer
 from Driving.ITypeOperationPolicy import ITypeOperationPolicy
+from Driving.DrivingVariable import DrivingVariable
+from Driving.DrivingValue import DrivingValue
+from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
 
 ## Interprets Nodes from the abstract syntax tree
 #
@@ -19,7 +22,7 @@ class AbstractSyntaxTreeInterpreter(object):
             # TODO< recode for real oop code >
             identifierIsKnown = variables.existVariableByName(node.name)
             if not identifierIsKnown:
-                raise InterpretationException("identifier {0} is unknown!".format(node.name))
+                raise InterpretationException("Variablename with identifier {0} is unknown!".format(node.name))
 
             lookedupVariable = variables.lookupVariableByName(node.name)
 
@@ -69,6 +72,5 @@ class AbstractSyntaxTreeInterpreter(object):
             result.boundedVariableName = node.leftSide.name
 
             return result
-
         else:
             raise InterpretationException("Unsupported AbstractSyntaxTree element for Interpretation!")

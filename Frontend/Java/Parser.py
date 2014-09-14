@@ -136,9 +136,12 @@ class Parser(object):
 
         b = variableInitializer.parseString("{aa,bb}")[0]
 
-        a = variableDeclaration.parseString("int a;")[0]
+        a = variableDeclaration.parseString("int a=b;")[0]
 
         listi = TreeRewriter.rewriteVariableDeclaration(a)
+
+        # just for testing
+        return listi
 
         # expression and stuff
         parseTree = expression.parseString("aa+bb*cc")[0]
