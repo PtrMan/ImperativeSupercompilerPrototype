@@ -65,9 +65,7 @@ class DrivingDescriptor(object):
         self.variableContainer = DrivingVariableContainer()
         self.outputGraphIndex = None  # index of the root Graph element where the next nodes are appended
 
-        # tupes of the form (astElement, astElementIndex)
         # note that the index _can_ be outside the valid range, if so the execution/driving needs to break out of the next layer and so on
-
         self.traceback = []
 
     def copy(self):
@@ -82,8 +80,11 @@ class DrivingDescriptor(object):
 
 from Driving.AbstractSyntaxTreeInterpreter import AbstractSyntaxTreeInterpreter
 from Driving.Java.JavaTypeOperationPolicy import JavaTypeOperationPolicy
+
 from AbstractSyntaxTree.EnumAbstractSyntaxTreeNodeType import EnumAbstractSyntaxTreeNodeType
 from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
+from AbstractSyntaxTree.TwoWayIfAbstractSyntaxTreeNode import TwoWayIfAbstractSyntaxTreeNode
+
 from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
 from Driving.EnumTypeNature import EnumTypeNature
 from Driving.EnumBuildinType import EnumBuildinType
@@ -91,6 +92,7 @@ from Driving.DrivingVariable import DrivingVariable
 from Driving.BoundTypeInformation import BoundTypeInformation
 
 from Exceptions.DrivingException import DrivingException
+from Exceptions.InternalErrorException import InternalErrorException
 
 class Supercompiler(object):
     def __init__(self):

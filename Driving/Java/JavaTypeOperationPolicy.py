@@ -46,3 +46,7 @@ class JavaTypeOperationPolicy(ITypeOperationPolicy):
 
     def isConditionTypeImplicitCastableToBool(self) -> bool:
         return False
+
+    def getValueOfImplicitCastToBuildinType(self, value: DrivingValue, castToType: BoundTypeInformation):
+        # TODO
+        raise NotImplementedError()
