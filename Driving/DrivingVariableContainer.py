@@ -1,4 +1,5 @@
 from Driving.DrivingVariable import DrivingVariable
+from Exceptions.VariableLookupException import VariableLookupException
 
 # small layer above the lookup and storage of variables while driving
 class DrivingVariableContainer(object):
@@ -13,7 +14,7 @@ class DrivingVariableContainer(object):
             if iterationVariable.name == name:
                 return iterationVariable
 
-        assert False
+        raise VariableLookupException(name)
 
     def existVariableByName(self, name: str) -> bool:
         for iterationVariable in self.variables:
