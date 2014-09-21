@@ -43,3 +43,6 @@ class JavaTypeOperationPolicy(ITypeOperationPolicy):
                 raise InvalidLanguageOperation("binary", "")
 
         raise InvalidLanguageOperation("binary", "Unhandled case, Internal Error")
+
+    def isConditionTypeImplicitCastableToBool(self) -> bool:
+        return False

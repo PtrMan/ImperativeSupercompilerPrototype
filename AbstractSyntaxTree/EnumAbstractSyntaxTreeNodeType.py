@@ -1,6 +1,6 @@
 class EnumAbstractSyntaxTreeNodeType(object):
     LOOP = 0
-    ONEWAYCONDITION = 1
+    ONEWAYCONDITION = 1 # deprecated
     CONTINUE = 2
     NOP = 3  # for testing
     ROOT = 4 # pseudo, only the top element can be a root element
@@ -12,3 +12,4 @@ class EnumAbstractSyntaxTreeNodeType(object):
     BINARYOPERATION = 10
     VARIABLEDECLARATION = 11
     INTEGERLITERAL = 12
+    TWOWAYIF = 13

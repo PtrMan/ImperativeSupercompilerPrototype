@@ -22,11 +22,6 @@ class GraphElement(object):
         self.content = content
 
 
-class EnumDrivingGraphElementContentType(object):
-    NOP = 0
-    CONTINUE = 1 # if an explicit or implicit continue of a loop was executed, is actually a nop
-    ASSIGNMENT = 2
-
 class EnumVariableType(object):
     INTEGER = 0
 
@@ -37,36 +32,28 @@ class Value(object):
 
         self.valueInt = 0
 
-class DrivingGraphElement(object):
-    def __init__(self, type):
-        self.type = type
-
-class DrivingGraphAssignmentElement(DrivingGraphElement):
-    def __init__(self):
-        super(DrivingGraphAssignmentElement, self).__init__(EnumDrivingGraphElementContentType.ASSIGNMENT)
-
-        self.leftVariableName = None
-        self.rightExpression = None # must be derived from DrivingGraphExpressions.Expression
-                                    # is the expression which gets evaluated for the value of the variable
-
-
-
-
-
-
-
-#class RootAbstractSyntaxTreeNode(AbstractSyntaxTreeNode):
-#    def __init__(self):
-#        super(RootAbstractSyntaxTreeNode, self).__init__(EnumAbstractSyntaxTreeNodeType.ROOT)
-
-
-
+from Driving.Graph.EnumDrivingGraphElementContentType import EnumDrivingGraphElementContentType
+from Driving.Graph.AssignmentElement import AssignmentElement as DrivingGraphAssignmentElement
+from Driving.Graph.HintElement import HintElement as DrivingGraphHintElement
+from Driving.Graph.Element import Element as DrivingGraphElement
 
 
 
 from Driving.DrivingValue import DrivingValue
 
 from Driving.DrivingVariableContainer import DrivingVariableContainer
+
+class DrivingTrackbackElement(object):
+    def __init__(self):
+        self.astElement = None
+        self.astElementIndex = None
+        self.hints = [] # to the trackback bound hints (which will be undone if the trackback element gets invalidated
+                        # this happens in the method .invalidate
+
+    # TODO< params so the hints can be undone
+    def invalidate(self, drivingDescriptor: DrivingDescriptor, driving: Supercompiler):
+        # TODO< write to the drivingGraph Hints that undo the Hints of the DrivingTrackbackElement >
+        pass
 
 class DrivingDescriptor(object):
     def __init__(self):
@@ -80,6 +67,7 @@ class DrivingDescriptor(object):
 
         # tupes of the form (astElement, astElementIndex)
         # note that the index _can_ be outside the valid range, if so the execution/driving needs to break out of the next layer and so on
+
         self.traceback = []
 
     def copy(self):
@@ -100,6 +88,7 @@ from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
 from Driving.EnumTypeNature import EnumTypeNature
 from Driving.EnumBuildinType import EnumBuildinType
 from Driving.DrivingVariable import DrivingVariable
+from Driving.BoundTypeInformation import BoundTypeInformation
 
 from Exceptions.DrivingException import DrivingException
 
@@ -135,19 +124,24 @@ class Supercompiler(object):
 
             iterationDrivingDescriptor = self._drivingDescriptors[drivingDescriptorIndex]
 
+            astElementType = iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type
 
 
-            if iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.LOOP:
-                iterationDrivingDescriptor.traceback.append((iterationDrivingDescriptor.astElement, iterationDrivingDescriptor.astElementIndex + 1))
+            if astElementType == EnumAbstractSyntaxTreeNodeType.LOOP:
+                drivingTrackbackElement = DrivingTrackbackElement()
+                drivingTrackbackElement.astElement = iterationDrivingDescriptor.astElement
+                drivingTrackbackElement.astElementIndex = iterationDrivingDescriptor.astElementIndex + 1
+
+                iterationDrivingDescriptor.traceback.append(drivingTrackbackElement)
 
                 iterationDrivingDescriptor.astElement = iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex]
                 iterationDrivingDescriptor.astElementIndex = 0
 
-            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.ONEWAYCONDITION:
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.ONEWAYCONDITION:
                 # TODO
                 pass
 
-            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.NOP:
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.NOP:
                 iterationDrivingDescriptor.astElementIndex += 1
 
                 deleteThisDrivingDescriptor = False
@@ -163,8 +157,8 @@ class Supercompiler(object):
                         tracebackObject = iterationDrivingDescriptor.traceback.pop()
 
                         createdDrivingDescriptor = iterationDrivingDescriptor.copy()
-                        createdDrivingDescriptor.astElement = tracebackObject[0]
-                        createdDrivingDescriptor.astElementIndex = tracebackObject[1]
+                        createdDrivingDescriptor.astElement = tracebackObject.astElement
+                        createdDrivingDescriptor.astElementIndex = tracebackObject.astElementIndex
 
                         self._drivingDescriptors.append(createdDrivingDescriptor)
 
@@ -172,7 +166,7 @@ class Supercompiler(object):
                     del self._drivingDescriptors[drivingDescriptorIndex]
                     drivingDescriptorIndex -= 1
 
-            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.CONTINUE:
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.CONTINUE:
                 # inform the generalisation that a continue happend, so it can fold it
                 # ASK< correct way to inform it? >
                 self._drivingGraph.addElement(GraphElement(DrivingGraphElement(EnumDrivingGraphElementContentType.CONTINUE)))
@@ -184,15 +178,14 @@ class Supercompiler(object):
                 iterationDrivingDescriptor.astElement = currentAstElement
                 iterationDrivingDescriptor.astElementIndex = 0
 
-            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENT:
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.ASSIGNMENT:
 
 
                 # check if left side is a identifier
                 # TODO< could also be a object access, array access, etc >
                 #       depends also on the used language
                 if iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].leftSide.type != EnumAbstractSyntaxTreeNodeType.IDENTIFIER:
-                    # TODO< throw exception
-                    assert False
+                    raise DrivingException("Left side of assignment must be an identifier")
 
                 # we only handle variablenames on the left side
 
@@ -233,7 +226,7 @@ class Supercompiler(object):
 
                 iterationDrivingDescriptor.astElementIndex += 1
 
-            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
                 currentNode = iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex]
 
                 interpretedResultValue = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(currentNode, iterationDrivingDescriptor.variableContainer, self._typeOperationPolicy)
@@ -253,14 +246,123 @@ class Supercompiler(object):
 
                 iterationDrivingDescriptor.astElementIndex += 1
 
-            elif iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex].type == EnumAbstractSyntaxTreeNodeType.VARIABLEDECLARATION:
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.VARIABLEDECLARATION:
                 self._interpretVariableDeclaration(iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex], iterationDrivingDescriptor)
 
+            elif astElementType == EnumAbstractSyntaxTreeNodeType.TWOWAYIF:
+                self._interpretTwoWayIf(iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex], iterationDrivingDescriptor)
+
+            else:
+                raise InternalErrorException("Unreachable!")
 
             drivingDescriptorIndex += 1
 
+    class EnumTakeOverloadedOperatorsIntoAccount(object):
+        YES = 1
+        NO = 0
+
+    def _interpretTwoWayIf(self, twoWayIf: TwoWayIfAbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor):
+        # first we need to evaluate the expression into a boolean value
+        # for that we need to check if the <residual> is completly statically evaluable
+        # if not, we have to writeout the expression completly
+
+        conditionIsResidualEvaluated = False
+        conditionResidualValue = False
+
+        # NOTE< _calculateExpressionAndWriteoutNonresidualsIfNeeded() writes out the non-<residual> allready >
+        residualInfoOfEvaluatedExpression = self._calculateExpressionAndWriteoutNonresidualsIfNeeded(twoWayIf.expression, drivingDescriptor.variableContainer)
+
+        if residualInfoOfEvaluatedExpression.isResidual:
+            residualValue = residualInfoOfEvaluatedExpression.residual.value
+
+            toCastType = BoundTypeInformation(EnumTypeNature.BUILDIN)
+            toCastType.buildinType = "bool"
+
+            # check if the residual value is a bool or implicit castable,
+            # we ask the typeOperationPolicy
+            # if the expression of an if is implicit castable to bool or have to be a bool
+            if self._typeOperationPolicy.isConditionTypeImplicitCastableToBool():
+                # we ask if the type is castable to bool
+                # must also take eventually overloaded castingoperators into account
+
+                if not self._isTypeCastableToType(residualValue.boundTypeInformation, toCastType, Supercompiler.EnumTakeOverloadedOperatorsIntoAccount.YES):
+                    raise DrivingException("Type is not (implicitly) castable to bool!")
+            else:
+                if residualValue.boundTypeInformation.typeNature != EnumTypeNature.BUILDIN or residualValue.boundTypeInformation.buildinType != "bool":
+                    raise DrivingException("Expression in if must be a bool!")
+
+            # decide if cast to bool is needed
+            isCastToBoolNeeded = residualValue.boundTypeInformation.typeNature != EnumTypeNature.BUILDIN or residualValue.boundTypeInformation.buildinType != "bool"
+
+            # do cast to bool if neccessary (and allowed)
+            castedResidualValue = None
+            if isCastToBoolNeeded:
+                castedResidualValue = self._typeOperationPolicy.getCastValueToType(residualValue, toCastType)
+            else:
+                castedResidualValue = residualValue
+
+            # just to make sure we don't accidentially use the value
+            del residualValue
+
+            # transfer it into the function body
+            conditionIsResidualEvaluated = True
+            conditionResidualValue = castedResidualValue.buildinValue
+        else:
+            # TODO< ensure that the writout contains a assignment to a anonymous boolean variable >
+            # TODO< writeout thing to transfer value to bool variable in the writeout >
+
+            # TODO
+            assert False, "TODO"
+
+            conditionIsResidualEvaluated = False
+
+
+
+        # check condition on <residual> if possible
+        #       if it is possible, write out a hint that the if was evaluated with true
+        #       and continue with the interpretation of the body as the next step >
+        #
+        #       if it is not possible, writeout if hint, open the two branches and create two descriptors which continue in the two branches
+        #       drop this descriptor
+
+        if conditionIsResidualEvaluated:
+            # writeout hint of taken path
+            # TODO< check if last element is a hint and append the hint to the hint >
+            createdHint = DrivingGraphHintElement.SingleHint(DrivingGraphHintElement.SingleHint.EnumType.CONDITIONPATHTAKEN)
+            createdHint.astElement = twoWayIf
+            createdHint.takenPath = conditionResidualValue
+
+            hintElement = DrivingGraphHintElement()
+            hintElement.hints.append(createdHint)
+
+            self._drivingGraph.addElement(GraphElement(hintElement))
+
+
+            # push object of hint together with the astnode on a stack
+            # NOTE< this is used to write a hint if the scope of the if is exited >
+            drivingTrackbackElement = DrivingTrackbackElement()
+            drivingTrackbackElement.astElement = drivingDescriptor.astElement
+            drivingTrackbackElement.astElementIndex = drivingDescriptor.astElementIndex + 1
+            drivingTrackbackElement.hints.append(createdHint)
+
+            drivingDescriptor.traceback.append(drivingTrackbackElement)
+
+
+            # update sate so the right branch is executed next
+            drivingDescriptor.astElementIndex = 0
+            if conditionResidualValue:
+                drivingDescriptor.astElement = twoWayIf.trueBody
+            else:
+                drivingDescriptor.astElement = twoWayIf.falseBody
+
+        else:
+            # TODO
+            assert False, "TODO"
+
     def _interpretVariableDeclaration(self, variableDeclarationNode: VariableDeclarationAbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor):
         # NOTE< only imperative languages where declaration of variables is necessary use this code >
+
+        # TODO< this does handle only <residual>s, we need code for non-residuals >
 
         # TODO< lookup the top variablecontainer
         #       for now we take the only variable container >
@@ -273,7 +375,12 @@ class Supercompiler(object):
 
         if variableDeclarationNode.rightSide != None:
             # interpret the right side
-            resultOnRightSide = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(variableDeclarationNode.rightSide, topVariableContainer, self._typeOperationPolicy)
+
+            resultOnRightSideWithResidualInfo = self._calculateExpressionAndWriteoutNonresidualsIfNeeded(variableDeclarationNode.rightSide, topVariableContainer)
+
+            # we only handle the residual case until now
+            assert resultOnRightSideWithResidualInfo.isResidual
+            resultOnRightSide = resultOnRightSideWithResidualInfo.residual
 
             assignedVariable = DrivingVariable()
             assignedVariable.name = variableDeclarationNode.variableName
@@ -285,6 +392,36 @@ class Supercompiler(object):
             x = 0
 
         drivingDescriptor.astElementIndex += 1
+
+    # contains the informations if a variables was only calculated as a <residual>, if so what the residual value is
+    # if not it contains the id TODO< is it a id or a key-string or something else > of the variable/object which has written out
+    # in the drivingGraph
+    class VariableResidualInfo(object):
+        def __init__(self, isResidual: bool):
+            self.isResidual = isResidual
+            self.residual = None # InterpretedResultValue
+            self.nonresidualVariableId = None # NOTE< im unsure about the time, is now not used and so not determined >
+
+    # in the case of any nonresiduals it returns the id of the variable
+    # it returns also
+    def _calculateExpressionAndWriteoutNonresidualsIfNeeded(self, node: AbstractSyntaxTreeNode, variables: DrivingVariableContainer) -> VariableResidualInfo:
+        if Supercompiler._doesContainOnlyResiduals(node, variables):
+            interpretationResult = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(node, variables, self._typeOperationPolicy)
+
+            variableResidualInfo = Supercompiler.VariableResidualInfo(True)
+            variableResidualInfo.residual = interpretationResult
+
+            return variableResidualInfo
+        else:
+            # TODO
+            assert False, "TODO"
+
+    # checks if all values in the expression or statement of node do have a residual
+    @staticmethod
+    def _doesContainOnlyResiduals(node: AbstractSyntaxTreeNode, variables: DrivingVariableContainer):
+        # TODO
+
+        return True
 
 
     # TODO< some mechanism to walk the scopes while searching for the variable
@@ -344,6 +481,10 @@ class Supercompiler(object):
         # for now it must be a buildin value
         assert value.boundTypeInformation.typeNature == EnumTypeNature.BUILDIN
         self._drivingGraph.elements[newOutputgraphIndex].content.rightExpression = ConstantExpression(value.buildinValue)
+
+    def _isTypeCastableToType(self, fromCastType: BoundTypeInformation, toCastType: BoundTypeInformation, EnumTakeOverloadedOperatorsIntoAccount):
+        # not implemented yet because it is currently not used
+        assert False, "TODO"
 
 # example without parser
 from AbstractSyntaxTree.SequenceAbstractSyntaxTreeNode import SequenceAbstractSyntaxTreeNode

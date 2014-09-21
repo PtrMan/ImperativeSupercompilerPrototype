@@ -22,3 +22,11 @@ class ITypeOperationPolicy(object):
     ## calculates the exact value after applying the operation on the two input values
     def getValueOfBinaryOperation(self, leftSide: DrivingValue, rightSide: DrivingValue, operationType: EnumBinaryOperationType) -> DrivingValue:
         raise NotImplementedError()
+
+    ## asks if a value of a condition expression is implicitly castable to bool
+    def isConditionTypeImplicitCastableToBool(self) -> bool:
+        raise NotImplementedError()
+
+    ## gets the value of an implicit cast, throws something if the cast is not possible
+    def getValueOfImplicitCastToBuildinType(self, value: DrivingValue, castToType: BoundTypeInformation):
+        raise NotImplementedError()

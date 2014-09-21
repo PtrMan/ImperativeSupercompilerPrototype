@@ -133,6 +133,9 @@ class Parser(object):
         expressionFollowedBySemicolon = expression + Literal(";")
         expressionFollowedBySemicolon.setParseAction(TakeFirstAstElement)
 
+        ifStatement = Literal("if") + Literal("(") + expression + Literal(")") + statement + Optional(Literal("else") + statement)
+        ifStatement.setParseAction(IfStatementAstElement)
+
         statement = \
             variableDeclaration | \
             expressionFollowedBySemicolon

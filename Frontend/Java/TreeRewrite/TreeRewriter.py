@@ -4,6 +4,7 @@ from Frontend.Java.EnumFrontendAstElementType import EnumFrontendAstElementType
 from Frontend.Java.JavaTypeFrontendAstElement import JavaTypeFrontendAstElement
 from Frontend.Java.BinaryOperationFrontendAstElement import BinaryOperationFrontendAstElement
 from Frontend.Java.TakeFirstAstElement import TakeFirstAstElement
+from Frontend.Java.IfStatementAstElement import IfStatementAstElement
 
 from Driving.BoundTypeInformation import BoundTypeInformation
 from Driving.EnumTypeNature import EnumTypeNature
@@ -15,6 +16,7 @@ from AbstractSyntaxTree.IntegerLiteralSyntaxTreeNode import IntegerLiteralSyntax
 from AbstractSyntaxTree.EnumBinaryOperationType import EnumBinaryOperationType
 
 from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
+from AbstractSyntaxTree.TwoWayIfAbstractSyntaxTreeNode import TwoWayIfAbstractSyntaxTreeNode
 
 ## rewrites a tree from a Frontend Tree to an AST Tree
 #
@@ -29,6 +31,15 @@ class TreeRewriter(object):
         else:
             # TODO< raise exception >
             assert False
+
+    @staticmethod
+    def _rewriteIf(ifStatement: IfStatementAstElement) -> TwoWayIfAbstractSyntaxTreeNode:
+        resultAstNode = TwoWayIfAbstractSyntaxTreeNode()
+        resultAstNode.expression = TreeRewriter.rewriteSingleElement(ifStatement.conditionExpression)
+        resultAstNode.trueBody = TreeRewriter.rewriteSingleElement(ifStatement.trueBody)
+
+        if ifStatement.elseBody != None:
+            resultAstNode.elseBody = TreeRewriter.rewriteSingleElement(ifStatement.elseBody)
 
     @staticmethod
     def _rewriteTakeFirst(takeFirst: TakeFirstAstElement) -> AbstractSyntaxTreeNode:

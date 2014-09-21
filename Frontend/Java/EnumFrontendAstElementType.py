@@ -9,3 +9,4 @@ class EnumFrontendAstElementType(object):
     INTEGERLITERAL = 7
     ASSIGNMENT = 8
     TAKEFIRST = 9
+    IF = 10
