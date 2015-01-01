@@ -8,6 +8,7 @@ from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarat
 from Frontend.Java.ModifierFrontendAstElement import ModifierFrontendAstElement
 from Frontend.Java.IntegerLiteralAstElement import IntegerLiteralAstElement
 from Frontend.Java.TakeFirstAstElement import TakeFirstAstElement
+from Frontend.Java.IfStatementAstElement import IfStatementAstElement
 
 from Frontend.Java.TreeRewrite.TreeRewriter import TreeRewriter
 
@@ -133,12 +134,17 @@ class Parser(object):
         expressionFollowedBySemicolon = expression + Literal(";")
         expressionFollowedBySemicolon.setParseAction(TakeFirstAstElement)
 
+        statement = Forward()
+
         ifStatement = Literal("if") + Literal("(") + expression + Literal(")") + statement + Optional(Literal("else") + statement)
         ifStatement.setParseAction(IfStatementAstElement)
 
-        statement = \
+        statementNonforward = \
             variableDeclaration | \
-            expressionFollowedBySemicolon
+            expressionFollowedBySemicolon | \
+            ifStatement
+
+        statement << statementNonforward
 
         terminatedStatements = ZeroOrMore(statement)
 
@@ -151,6 +157,8 @@ class Parser(object):
 
         a = statement.parseString("int a = 0;")[0]
         a = terminatedStatements.parseString("a = 0;")
+
+        a = statement.parseString("if(a) int a = 0;")
 
         listi = TreeRewriter.rewriteSingleElement(a[0])
 

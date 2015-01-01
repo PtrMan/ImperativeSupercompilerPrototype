@@ -1,3 +1,5 @@
+from Exceptions.InternalErrorException import InternalErrorException
+
 from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarationFrontendAstElement
 from Frontend.Java.FrontendAstElement import FrontendAstElement
 from Frontend.Java.EnumFrontendAstElementType import EnumFrontendAstElementType
@@ -24,13 +26,18 @@ from AbstractSyntaxTree.TwoWayIfAbstractSyntaxTreeNode import TwoWayIfAbstractSy
 class TreeRewriter(object):
     @staticmethod
     def rewriteSingleElement(astElement: FrontendAstElement) -> AbstractSyntaxTreeNode:
-        if astElement.type == EnumFrontendAstElementType.TAKEFIRST:
+        if astElement.type == EnumFrontendAstElementType.IDENTIFIER:
+            return TreeRewriter._convertJavaAstExpressionToGeneralAst(astElement)
+        elif astElement.type == EnumFrontendAstElementType.TAKEFIRST:
             return TreeRewriter._rewriteTakeFirst(astElement)
         elif astElement.type == EnumFrontendAstElementType.BINARYOPERATION:
             return TreeRewriter._rewriteBinaryOperation(astElement)
+        elif astElement.type == EnumFrontendAstElementType.IF:
+            return TreeRewriter._rewriteIf(astElement)
+        elif astElement.type == EnumFrontendAstElementType.VARIABALEDECLARATIONS:
+            return  TreeRewriter.rewriteVariableDeclaration(astElement)
         else:
-            # TODO< raise exception >
-            assert False
+            raise InternalErrorException("Unhandled astElement.type")
 
     @staticmethod
     def _rewriteIf(ifStatement: IfStatementAstElement) -> TwoWayIfAbstractSyntaxTreeNode:
@@ -116,8 +123,7 @@ class TreeRewriter(object):
 
 
         else:
-            # TODO< raise exception >
-            assert False
+            raise InternalErrorException("Unhandled astElement.type")
 
     # tries to translate a JavaTypeFrontendAstElement to a Bound Type which can be used for driving
     # for userdefined types this has to be called after the type analysis of the input program
