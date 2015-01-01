@@ -14,7 +14,7 @@ class HintElement(Element):
             # .astElement is the TwoWayIfAbsractSyntaxTreeNode of the condition for the hint
             CONDITIONPATHTAKEN = 1
 
-        def __init__(self, type: HintElement.SingleHint.EnumType):
+        def __init__(self, type):
             self.type = type
 
             self.takenPath = None
