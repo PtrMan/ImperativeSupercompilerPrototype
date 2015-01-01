@@ -1,3 +1,4 @@
+from Frontend.Java.BlockFrontendAstElement import BlockFrontendAstElement
 from Libs.pyparsing import Literal, alphas, Word, delimitedList, Optional, ZeroOrMore, Forward, oneOf, nums, FollowedBy, OneOrMore
 from Frontend.Java.IdentifierFrontendAstElement import IdentifierFrontendAstElement
 from Frontend.Java.BinaryOperationFrontendAstElement import BinaryOperationFrontendAstElement
@@ -131,17 +132,36 @@ class Parser(object):
 
         expression << expressionNonforward
 
-        expressionFollowedBySemicolon = expression + Literal(";")
-        expressionFollowedBySemicolon.setParseAction(TakeFirstAstElement)
-
         statement = Forward()
+
+        # TODO< LocalVariableDeclarationStatement >
+        # TODO< ClassOrInterfaceDeclaration >
+        # TODO< [Identifier :] Statement  label >
+        blockStatement = statement
+
+        block = Literal("{") + OneOrMore(blockStatement) + Literal("}")
+        block.setParseAction(BlockFrontendAstElement)
 
         ifStatement = Literal("if") + Literal("(") + expression + Literal(")") + statement + Optional(Literal("else") + statement)
         ifStatement.setParseAction(IfStatementAstElement)
 
+        # TODO< assert Expression [: Expression] ;                       >
+        # TODO< switch ParExpression { SwitchBlockStatementGroups }      >
+        # TODO< while ParExpression Statement                            >
+        # TODO< do Statement while ParExpression ;                       >
+        # TODO< for ( ForControl ) Statement                             >
+        # TODO< break [Identifier] ;                                     >
+        # TODO< continue [Identifier] ;                                  >
+        # TODO< return [Expression] ;                                    >
+        # TODO< throw Expression ;                                       >
+        # TODO< synchronized ParExpression Block                         >
+        # TODO< try Block (Catches | [Catches] Finally)                  >
+        # TODO< try ResourceSpecification Block [Catches] [Finally]      >
         statementNonforward = \
+            block | \
+            Literal(";") | \
             variableDeclaration | \
-            expressionFollowedBySemicolon | \
+            (expression + Literal(";")) | \
             ifStatement
 
         statement << statementNonforward

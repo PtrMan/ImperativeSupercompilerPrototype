@@ -10,3 +10,4 @@ class EnumFrontendAstElementType(object):
     ASSIGNMENT = 8
     TAKEFIRST = 9
     IF = 10
+    BLOCK = 11

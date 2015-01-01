@@ -1,5 +1,6 @@
 from Exceptions.InternalErrorException import InternalErrorException
 
+from Frontend.Java.BlockFrontendAstElement import BlockFrontendAstElement
 from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarationFrontendAstElement
 from Frontend.Java.FrontendAstElement import FrontendAstElement
 from Frontend.Java.EnumFrontendAstElementType import EnumFrontendAstElementType
@@ -16,6 +17,7 @@ from AbstractSyntaxTree.IdentifierAbstractSyntaxTreeNode import IdentifierAbstra
 from AbstractSyntaxTree.BinaryOperationAbstractSyntaxTreeNode import BinaryOperationAbstractSyntaxTreeNode
 from AbstractSyntaxTree.IntegerLiteralSyntaxTreeNode import IntegerLiteralSyntaxTreeNode
 from AbstractSyntaxTree.EnumBinaryOperationType import EnumBinaryOperationType
+from AbstractSyntaxTree.SequenceAbstractSyntaxTreeNode import SequenceAbstractSyntaxTreeNode
 
 from AbstractSyntaxTree.VariableDeclarationAbstractSyntaxTreeNode import VariableDeclarationAbstractSyntaxTreeNode
 from AbstractSyntaxTree.TwoWayIfAbstractSyntaxTreeNode import TwoWayIfAbstractSyntaxTreeNode
@@ -35,7 +37,9 @@ class TreeRewriter(object):
         elif astElement.type == EnumFrontendAstElementType.IF:
             return TreeRewriter._rewriteIf(astElement)
         elif astElement.type == EnumFrontendAstElementType.VARIABALEDECLARATIONS:
-            return  TreeRewriter.rewriteVariableDeclaration(astElement)
+            return TreeRewriter.rewriteVariableDeclaration(astElement)
+        elif astElement.type == EnumFrontendAstElementType.BLOCK:
+            return TreeRewriter._rewriteBlock(astElement)
         else:
             raise InternalErrorException("Unhandled astElement.type")
 
@@ -55,6 +59,15 @@ class TreeRewriter(object):
     @staticmethod
     def _rewriteBinaryOperation(binaryOperationJavaAst: BinaryOperationFrontendAstElement) -> BinaryOperationAbstractSyntaxTreeNode:
         return TreeRewriter._convertJavaAstExpressionToGeneralAst(binaryOperationJavaAst)
+
+    @staticmethod
+    def _rewriteBlock(blockStatement: BlockFrontendAstElement) -> SequenceAbstractSyntaxTreeNode:
+        resultAstNode = SequenceAbstractSyntaxTreeNode()
+
+        for iterationFrontendAstElement in blockStatement.elements:
+            resultAstNode.childrens.append(TreeRewriter.rewriteSingleElement(iterationFrontendAstElement))
+
+        return resultAstNode
 
     # rewrites an VariableDeclarationFrontendAstElement to one or many assignment statements
     # the array initialisators are rewritten too
