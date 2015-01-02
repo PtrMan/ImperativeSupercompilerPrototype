@@ -1,4 +1,4 @@
-from Frontend.Java.BlockFrontendAstElement import BlockFrontendAstElement
+from Frontend.Java.LocalVariableDeclarationFrontendAstElement import LocalVariableDeclarationFrontendAstElement
 from Libs.pyparsing import Literal, alphas, Word, delimitedList, Optional, ZeroOrMore, Forward, oneOf, nums, FollowedBy, OneOrMore
 from Frontend.Java.IdentifierFrontendAstElement import IdentifierFrontendAstElement
 from Frontend.Java.BinaryOperationFrontendAstElement import BinaryOperationFrontendAstElement
@@ -10,8 +10,17 @@ from Frontend.Java.ModifierFrontendAstElement import ModifierFrontendAstElement
 from Frontend.Java.IntegerLiteralAstElement import IntegerLiteralAstElement
 from Frontend.Java.TakeFirstAstElement import TakeFirstAstElement
 from Frontend.Java.IfStatementAstElement import IfStatementAstElement
+from Frontend.Java.BlockFrontendAstElement import BlockFrontendAstElement
+from Frontend.Java.ReferenceTypeFrontendAstElement import ReferenceTypeFrontendAstElement
+from Frontend.Java.TypeArgumentFrontendAstElement import TypeArgumentFrontendAstElement
+from Frontend.Java.TypeArgumentsFrontendAstElement import TypeArgumentsFrontendAstElement
+from Frontend.Java.TypeFrontendAstElement import TypeFrontendAstElement
+from Frontend.Java.VariableDeclaratorsFrontendAstElement import VariableDeclaratorsFrontendAstElement
+from Frontend.Java.VariableModifierFrontendAstElement import VariableModifierFrontendAstElement
 
 from Frontend.Java.TreeRewrite.TreeRewriter import TreeRewriter
+
+# for the (used) java parser specification see http://docs.oracle.com/javase/specs/jls/se7/html/jls-18.html
 
 class Parser(object):
     def __init__(self):
@@ -19,10 +28,61 @@ class Parser(object):
 
     def _init(self):
         # forwards
+
+        identifier = Forward()
+
+        basicType = Forward()
+        referenceType = Forward()
+        typeArguments = Forward()
+        typeArgument = Forward()
+
         expression = Forward()
         variableInitializer = Forward()
 
-        identifier = Word(alphas)
+        #####################################
+
+        _type = \
+            (basicType + ZeroOrMore(Literal("[") + Literal("]"))) | \
+            (referenceType + ZeroOrMore(Literal("[") + Literal("]")))
+        _type.setParseAction(TypeFrontendAstElement)
+        # decides based on the type of the first parameter if its a basicType or a referenceType
+
+        basicTypeNonforward = \
+            Literal("byte") | \
+            Literal("short") | \
+            Literal("char") | \
+            Literal("int") | \
+            Literal("long") | \
+            Literal("float") | \
+            Literal("double") | \
+            Literal("boolean")
+        basicType << basicTypeNonforward
+
+        referenceTypeNonforward = identifier + Optional(typeArguments) + ZeroOrMore(Literal(".") + identifier + Optional(typeArguments))
+        referenceTypeNonforward.setParseAction(ReferenceTypeFrontendAstElement)
+        referenceType << referenceTypeNonforward
+
+        typeArgumentsNonforward = Literal("<") + typeArgument + ZeroOrMore(Literal(",") + typeArgument) + Literal(">")
+        typeArgumentsNonforward.setParseAction(TypeArgumentsFrontendAstElement)
+        typeArguments << typeArgumentsNonforward
+
+        typeArgumentNonforward = \
+            referenceType | \
+            (Literal("?") + Optional((Literal("extends") | Literal("super")) + referenceType) )
+        typeArgumentNonforward.setParseAction(TypeArgumentFrontendAstElement)
+        typeArgument << typeArgumentNonforward
+
+        ######################################
+
+
+
+
+
+
+
+
+        identifierNonforward = Word(alphas)
+        identifier << identifierNonforward
 
         # TODO< after spec >
         integerLiteral = Word(nums)
@@ -62,6 +122,9 @@ class Parser(object):
 
         variableDeclarator = identifier + Optional(Literal("[") + Literal("]")) + Optional(Literal("=") + variableInitializer)
         variableDeclarator.setParseAction(VariableDeclaratorFrontendAstElement)
+
+        variableDeclarators = variableDeclarator + ZeroOrMore(Literal(",") + variableDeclarator)
+        variableDeclarators.setParseAction(VariableDeclaratorsFrontendAstElement)
 
         # TODO< multiple declarations >
         # TODO< maybe the action must be modified >
@@ -134,13 +197,30 @@ class Parser(object):
 
         statement = Forward()
 
+        ########################
+
+        variableModifier = \
+            Literal("final")
+            # TODO< Annotation >
+        variableModifier.setParseAction(VariableModifierFrontendAstElement)
+
+        ########################
+
+        blockStatement = Forward()
+
+        block = Literal("{") + ZeroOrMore(blockStatement) + Literal("}")
+        block.setParseAction(BlockFrontendAstElement)
+
         # TODO< LocalVariableDeclarationStatement >
         # TODO< ClassOrInterfaceDeclaration >
         # TODO< [Identifier :] Statement  label >
-        blockStatement = statement
+        blockStatementNonforward = statement
+        blockStatement << blockStatementNonforward
 
-        block = Literal("{") + OneOrMore(blockStatement) + Literal("}")
-        block.setParseAction(BlockFrontendAstElement)
+        localVariableDeclarationStatement = ZeroOrMore(variableModifier) + _type + variableDeclarators + ";"
+        localVariableDeclarationStatement.setParseAction(LocalVariableDeclarationFrontendAstElement)
+
+        ##########################
 
         ifStatement = Literal("if") + Literal("(") + expression + Literal(")") + statement + Optional(Literal("else") + statement)
         ifStatement.setParseAction(IfStatementAstElement)
@@ -170,6 +250,9 @@ class Parser(object):
 
         methodDefinition = javaType + identifier + Literal("(") + methodParameters + Literal(")") + Literal("{") + terminatedStatements + Literal("}")
 
+        self.statement = statement
+
+        return
 
         b = variableInitializer.parseString("{aa,bb}")[0]
 
@@ -206,7 +289,7 @@ class Parser(object):
 
 
 
-        print("real tests")
+        print("real Tests")
 
         # type test
         print(methodDefinition.parseString("mytype test() {a+b;}"))
@@ -220,3 +303,13 @@ class Parser(object):
 
         # variable initialisation
         print(methodDefinition.parseString("mytype test(int a, int b) {int z = a;}"))
+
+    ## tries to parse the text, throws a parsing exception if something gone wrong
+    #
+    # returns the Abstract Syntax Tree
+    def parse(self, text: str):
+        a = self.statement.parseString(text)
+
+        rewritten = TreeRewriter.rewriteSingleElement(a[0])
+
+        return rewritten

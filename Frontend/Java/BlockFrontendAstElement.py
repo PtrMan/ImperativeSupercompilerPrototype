@@ -6,7 +6,7 @@ class BlockFrontendAstElement(FrontendAstElement):
     def __init__(self, data):
         super(BlockFrontendAstElement, self).__init__(EnumFrontendAstElementType.BLOCK)
 
-        assert len(data) > 2
+        assert len(data) >= 2
 
         self.elements = []
 
