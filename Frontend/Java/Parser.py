@@ -35,7 +35,7 @@ class Parser(object):
         referenceType = Forward()
         typeArguments = Forward()
         typeArgument = Forward()
-        
+
         localVariableDeclarationStatement = Forward()
 
         expression = Forward()

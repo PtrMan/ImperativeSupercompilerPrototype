@@ -25,8 +25,10 @@ class TypeFrontendAstElement(FrontendAstElement):
         self.referenceType = None
 
         if isBasicType:
+            self.type2 = TypeFrontendAstElement.EnumType.BASICTYPE
             self.basicType = data[0]
         else:
+            self.type2 = TypeFrontendAstElement.EnumType.REFERENCETYPE
             self.referenceType = data[0]
 
         self.arrayLevel = (len(data)-1) / 2
