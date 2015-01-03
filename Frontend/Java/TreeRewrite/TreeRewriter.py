@@ -1,6 +1,9 @@
+from AbstractSyntaxTree.NonscopedSequenceAbstractSyntaxTreeNode import NonscopedSequenceAbstractSyntaxTreeNode
 from Exceptions.InternalErrorException import InternalErrorException
 
 from Frontend.Java.BlockFrontendAstElement import BlockFrontendAstElement
+from Frontend.Java.LocalVariableDeclarationFrontendAstElement import LocalVariableDeclarationFrontendAstElement
+from Frontend.Java.TypeFrontendAstElement import TypeFrontendAstElement
 from Frontend.Java.VariableDeclarationFrontendAstElement import VariableDeclarationFrontendAstElement
 from Frontend.Java.FrontendAstElement import FrontendAstElement
 from Frontend.Java.EnumFrontendAstElementType import EnumFrontendAstElementType
@@ -40,6 +43,8 @@ class TreeRewriter(object):
             return TreeRewriter.rewriteVariableDeclaration(astElement)
         elif astElement.type == EnumFrontendAstElementType.BLOCK:
             return TreeRewriter._rewriteBlock(astElement)
+        elif astElement.type == EnumFrontendAstElementType.LOCALVARIABLEDECLARATION:
+            return TreeRewriter._rewriteLocalVariableDeclaration(astElement)
         else:
             raise InternalErrorException("Unhandled astElement.type")
 
@@ -102,6 +107,53 @@ class TreeRewriter(object):
             resultList.append(resultVariableDeclaration)
 
         return resultList
+
+    @staticmethod
+    def _rewriteLocalVariableDeclaration(localVariableDeclarationJavaAst: LocalVariableDeclarationFrontendAstElement):
+        ## translates the type to a bound type, if possible
+        # modifiers can be []
+        def getBoundType():
+            modifiers = localVariableDeclarationJavaAst.modifiers
+            type = localVariableDeclarationJavaAst.type
+
+            if len(modifiers) > 0:
+                # TODO
+                raise TodoException("modifiers need to be implemented")
+
+            if type.type2 == TypeFrontendAstElement.EnumType.BASICTYPE:
+                resultBoundType = BoundTypeInformation(EnumTypeNature.BUILDIN)
+                resultBoundType.buildinType = type.basicType
+
+                return resultBoundType
+            elif type.type2 == TypeFrontendAstElement.EnumType.REFERENCETYPE:
+                # TODO
+                raise TodoException("reference types are currently not supported")
+
+        baseBoundType = getBoundType()
+
+        variableDeclarators = localVariableDeclarationJavaAst.variableDeclaratorsObject
+
+        if len(variableDeclarators.declarators) == 0:
+            raise InternalErrorException("len(variableDeclarators.declarators) is zero, which is impossible")
+
+        resultNonscopedSequence = NonscopedSequenceAbstractSyntaxTreeNode()
+
+        for iterationVariableDeclarator in variableDeclarators.declarators:
+            if iterationVariableDeclarator.hasBrackets:
+                # TODO
+                raise TodoException("bracket 'modifiers' are currently not supported")
+
+            if iterationVariableDeclarator.variableInitializer:
+                # TODO HIGH
+                raise TodoException("variable initialisizers are currently not supported")
+
+            variablename = iterationVariableDeclarator.declarationVariablenameIdentifier.identifierAsString
+
+            variableDeclarationAstNode = VariableDeclarationAbstractSyntaxTreeNode(baseBoundType, variablename)
+            resultNonscopedSequence.childrens.append(variableDeclarationAstNode)
+
+        return resultNonscopedSequence
+
 
     @staticmethod
     def _convertJavaAstExpressionToGeneralAst(astElement: FrontendAstElement) -> AbstractSyntaxTreeNode:
