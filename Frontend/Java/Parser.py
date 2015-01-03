@@ -35,6 +35,8 @@ class Parser(object):
         referenceType = Forward()
         typeArguments = Forward()
         typeArgument = Forward()
+        
+        localVariableDeclarationStatement = Forward()
 
         expression = Forward()
         variableInitializer = Forward()
@@ -211,14 +213,16 @@ class Parser(object):
         block = Literal("{") + ZeroOrMore(blockStatement) + Literal("}")
         block.setParseAction(BlockFrontendAstElement)
 
-        # TODO< LocalVariableDeclarationStatement >
         # TODO< ClassOrInterfaceDeclaration >
         # TODO< [Identifier :] Statement  label >
-        blockStatementNonforward = statement
+        blockStatementNonforward = \
+            localVariableDeclarationStatement | \
+            statement
         blockStatement << blockStatementNonforward
 
-        localVariableDeclarationStatement = ZeroOrMore(variableModifier) + _type + variableDeclarators + ";"
-        localVariableDeclarationStatement.setParseAction(LocalVariableDeclarationFrontendAstElement)
+        localVariableDeclarationStatementNonforward = ZeroOrMore(variableModifier) + _type + variableDeclarators + ";"
+        localVariableDeclarationStatementNonforward.setParseAction(LocalVariableDeclarationFrontendAstElement)
+        localVariableDeclarationStatement << localVariableDeclarationStatementNonforward
 
         ##########################
 
