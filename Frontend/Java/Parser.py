@@ -1,5 +1,5 @@
 from Frontend.Java.LocalVariableDeclarationFrontendAstElement import LocalVariableDeclarationFrontendAstElement
-from Libs.pyparsing import Literal, alphas, Word, delimitedList, Optional, ZeroOrMore, Forward, oneOf, nums, FollowedBy, OneOrMore
+from Libs.pyparsing import Literal, alphas, Word, delimitedList, Optional, ZeroOrMore, Forward, oneOf, nums, FollowedBy, OneOrMore, restOfLine
 from Frontend.Java.IdentifierFrontendAstElement import IdentifierFrontendAstElement
 from Frontend.Java.BinaryOperationFrontendAstElement import BinaryOperationFrontendAstElement
 from Frontend.Java.JavaTypeFrontendAstElement import JavaTypeFrontendAstElement
@@ -27,6 +27,11 @@ class Parser(object):
         self._init()
 
     def _init(self):
+        # comments
+
+        comment = (Literal("/") + Literal("/") + restOfLine).suppress()
+
+
         # forwards
 
         identifier = Forward()
@@ -253,7 +258,8 @@ class Parser(object):
 
         methodDefinition = javaType + identifier + Literal("(") + methodParameters + Literal(")") + Literal("{") + terminatedStatements + Literal("}")
 
-        self.statement = statement
+        self.parser = statement
+        self.parser.ignore(comment)
 
         return
 
@@ -311,7 +317,7 @@ class Parser(object):
     #
     # returns the Abstract Syntax Tree
     def parse(self, text: str):
-        a = self.statement.parseString(text)
+        a = self.parser.parseString(text)
 
         rewritten = TreeRewriter.rewriteSingleElement(a[0])
 
