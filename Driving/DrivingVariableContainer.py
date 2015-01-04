@@ -1,5 +1,5 @@
 from Driving.DrivingVariable import DrivingVariable
-from Exceptions.VariableLookupException import VariableLookupException
+from Exceptions.VariableManagmentException import VariableLookupException
 
 # small layer above the lookup and storage of variables while driving
 class DrivingVariableContainer(object):

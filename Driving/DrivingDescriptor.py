@@ -1,7 +1,7 @@
 from Driving.DrivingDescriptorVariableScopeRedirector import DrivingDescriptorVariableScopeRedirector
 from Driving.DrivingVariable import DrivingVariable
 from Driving.Scope import Scope
-from Exceptions.VariableLookupException import VariableLookupException
+from Exceptions.VariableManagmentException import VariableManagmentException
 
 class DrivingDescriptor(object):
     def __init__(self):
@@ -30,10 +30,35 @@ class DrivingDescriptor(object):
     # searches for the first scope and inserts there a variable with that name and that value
     #
     # doesn't look in the topmost scope if a variable with the same name does allready exist
-    def declareVariable(self, variablename: str, drivingVariable: DrivingVariable):
-        # TODO
-        assert False, "TODO"
-        
+    def declareLocalVariable(self, variablename: str, drivingVariable: DrivingVariable):
+        assert len(self.traceback) > 0
+
+        for trackbackI in reversed(range(0, len(self.traceback))):
+            iterationTrackbackElement = self.traceback[trackbackI]
+
+            for scopeI in reversed(range(0, len(iterationTrackbackElement.scopes))):
+                currentScope = iterationTrackbackElement.scopes[scopeI]
+                currentScopeType = currentScope.scopeType
+
+                if currentScopeType == Scope.EnumScopeType.NORMALSCOPE or currentScopeType == Scope.EnumScopeType.FUNCTIONSCOPE:
+                    # scope lookup was successful
+                    # now we need to add the new variable to the scope
+
+                    if currentScope.variableContainer.existVariableByName(variablename):
+                        raise VariableManagmentException(VariableManagmentException.EnumType.DECLARE, "Variable with the name {0} exists already in the scope!".format(variablename))
+
+                    currentScope.variableContainer.addVariable(drivingVariable)
+
+                    return
+
+                elif currentScopeType == Scope.EnumScopeType.TERMINALSCOPE:
+                    # we didn't find a scope to declare it
+                    raise VariableManagmentException(VariableManagmentException.EnumType.DECLARE, "Can't find a scope for declaration [might be a internal error]")
+
+                else:
+                    # just continue the search
+                    pass
+        assert False, "unreachable"
 
     # searches for the topmost scope with the variablename
     #
@@ -49,7 +74,7 @@ class DrivingDescriptor(object):
 
         while True:
             if trackbackI < 0:
-                raise VariableLookupException(variablename)
+                raise VariableManagmentException(VariableManagmentException.EnumType.LOOKUP, variablename)
 
             iterationTrackbackElement = self.traceback[trackbackI]
 
@@ -76,7 +101,7 @@ class DrivingDescriptor(object):
             iterationScope = scopes[scopeI]
 
             if iterationScope.scopeType == Scope.EnumScopeType.TERMINALSCOPE:
-                raise VariableLookupException(variablename)
+                raise VariableManagmentException(VariableManagmentException.EnumType.LOOKUP, variablename)
             elif iterationScope.scopeType == Scope.EnumScopeType.FUNCTIONSCOPE or iterationScope.scopeType == Scope.EnumScopeType.NORMALSCOPE:
                 if not iterationScope.variableContainer.existVariableByName(variablename):
                     scopeI -= 1
