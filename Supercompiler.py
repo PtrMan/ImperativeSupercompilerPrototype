@@ -1,9 +1,5 @@
 # small prototype for a supercompiler
 
-# TODO
-# - how to handle types in typed languages/interpreted languages (assignment, etc)
-#   needs a implementable variable type conversion system
-
 from DrivingGraphExpressions.ConstantExpression import ConstantExpression
 
 class Graph(object):
@@ -38,24 +34,10 @@ from Driving.Graph.HintElement import HintElement as DrivingGraphHintElement
 from Driving.Graph.Element import Element as DrivingGraphElement
 
 
-
+from Driving.DrivingDescriptor import DrivingDescriptor
 from Driving.DrivingValue import DrivingValue
 
 from Driving.DrivingVariableContainer import DrivingVariableContainer
-
-class Scope(object):
-    class EnumScopeType(object):
-        NOSCOPE = 0
-        NORMALSCOPE = 1 # any other oop scope
-        OBJECTSCOPE = 2 # scope of a object, the object holds all variables of the object of the call
-        TERMINALSCOPE = 3 # name lookup terminates here
-        FUNCTIONSCOPE = 4 # scope of the functionbody
-
-
-    def __init__(self, scopeType: Scope.EnumScopeType):
-        self.scopeType = scopeType
-        self.variableContainer = None
-        """:type : [DrivingVariableContainer]"""
 
 
 class DrivingTrackbackElement(object):
@@ -75,113 +57,6 @@ class DrivingTrackbackElement(object):
     def invalidate(self, drivingDescriptor: DrivingDescriptor, driving: Supercompiler):
         # TODO< write to the drivingGraph Hints that undo the Hints of the DrivingTrackbackElement >
         pass
-
-from Exceptions.VariableLookupException import VariableLookupException
-
-class DrivingDescriptor(object):
-    def __init__(self):
-        self.astElement = None  # the current abstract syntax element which is "executed" next
-        self.astElementIndex = None
-
-        # used to store and lookup variables
-        # which are instances of "DrivingVariable"
-        ###self.variableContainer = DrivingVariableContainer()
-        self.outputGraphIndex = None  # index of the root Graph element where the next nodes are appended
-
-        # note that the index _can_ be outside the valid range, if so the execution/driving needs to break out of the next layer and so on
-        # [DrivingTrackbackElement]
-        self.traceback = []
-
-
-        # used by the driving mechanism to lookup and store variables
-        self.variableRedirector = DrivingDescriptorVariableScopeRedirector(self)
-
-    def copy(self):
-        createdDescriptor = DrivingDescriptor()
-        createdDescriptor.astElement = self.astElement
-        createdDescriptor.astElementIndex = self.astElementIndex
-        ###createdDescriptor.variableContainer = self.variableContainer.copy()
-        createdDescriptor.outputGraphIndex = self.outputGraphIndex
-        createdDescriptor.traceback = self.traceback.copy()
-
-        return createdDescriptor
-
-    # searches for the first scope and inserts there a variable with that name and that value
-    #
-    # doesn't look in the topmost scope if a variable with the same name does allready exist
-    def declareVariable(self, variablename: str, drivingVariable: DrivingVariable):
-        # TODO
-        assert False, "TODO"
-
-    # searches for the topmost scope with the variablename
-    #
-    # throws an exception if it wasn't found
-    def setVariableByName(self, name: str, variable: DrivingVariable):
-        # TODO
-        assert False, "TODO"
-
-    # throws an exception if the variable was not found
-    def lookupVariable(self, variablename: str) -> DrivingVariable:
-        assert len(self.traceback) > 0
-        trackbackI = len(self.traceback)-1
-
-        while True:
-            if trackbackI < 0:
-                raise VariableLookupException(variablename)
-
-            iterationTrackbackElement = self.traceback[trackbackI]
-
-            lookupResult = DrivingDescriptor._lookupScopesByVariablename(variablename, iterationTrackbackElement.scopes)
-
-            if lookupResult == None:
-                trackbackI -= 1
-                continue
-
-            return lookupResult
-
-    # returns none if it couldn't find the Variable
-    @staticmethod
-    def _lookupScopesByVariablename(variablename: str, scopes: [Scope]) -> DrivingVariable:
-        if len(scopes) == 0:
-            return None
-
-        scopeI = len(scopes) - 1
-
-        while True:
-            if scopeI < 0:
-                return None
-
-            iterationScope = scopes[scopeI]
-
-            if iterationScope.scopeType == Scope.EnumScopeType.TERMINALSCOPE:
-                raise VariableLookupException(variablename)
-            elif iterationScope.scopeType == Scope.EnumScopeType.FUNCTIONSCOPE or iterationScope.scopeType == Scope.EnumScopeType.NORMALSCOPE:
-                if not iterationScope.variableContainer.existVariableByName(variablename):
-                    scopeI -= 1
-                    continue
-
-                return iterationScope.variableContainer.lookupVariableByName(variablename)
-            elif iterationScope.scopeType == Scope.EnumScopeType.NOSCOPE:
-                scopeI -= 1
-                continue
-
-        assert False, "Unreachable"
-
-from Driving.IVariableScopesRedirector import IVariableScopesRedirector
-
-class DrivingDescriptorVariableScopeRedirector(IVariableScopesRedirector):
-    def __init__(self, drivingDescriptor: DrivingDescriptor):
-        self._drivingDescriptor = drivingDescriptor
-
-    def lookupVariable(self, variablename: str) -> DrivingVariable:
-        return self._drivingDescriptor.lookupVariable(variablename)
-
-    def setVariableByName(self, name: str, variable: DrivingVariable):
-        self._drivingDescriptor.setVariableByName(name, variable)
-
-    def declareVariable(self, name: str, drivingVariable: DrivingVariable):
-        self._drivingDescriptor.declareVariable(name, drivingVariable)
-
 
 from Driving.AbstractSyntaxTreeInterpreter import AbstractSyntaxTreeInterpreter
 from Driving.Java.JavaTypeOperationPolicy import JavaTypeOperationPolicy
