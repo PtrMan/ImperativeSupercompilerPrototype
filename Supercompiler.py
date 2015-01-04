@@ -43,15 +43,16 @@ from Driving.DrivingValue import DrivingValue
 
 from Driving.DrivingVariableContainer import DrivingVariableContainer
 
-class EnumScopeType(object):
-    NOSCOPE = 0
-    NORMALSCOPE = 1 # any other oop scope
-    OBJECTSCOPE = 2 # scope of a object, the object holds all variables of the object of the call
-    TERMINALSCOPE = 3 # name lookup terminates here
-    FUNCTIONSCOPE = 4 # scope of the functionbody
-
 class Scope(object):
-    def __init__(self, scopeType: EnumScopeType):
+    class EnumScopeType(object):
+        NOSCOPE = 0
+        NORMALSCOPE = 1 # any other oop scope
+        OBJECTSCOPE = 2 # scope of a object, the object holds all variables of the object of the call
+        TERMINALSCOPE = 3 # name lookup terminates here
+        FUNCTIONSCOPE = 4 # scope of the functionbody
+
+
+    def __init__(self, scopeType: Scope.EnumScopeType):
         self.scopeType = scopeType
         self.variableContainer = None
         """:type : [DrivingVariableContainer]"""
@@ -152,15 +153,15 @@ class DrivingDescriptor(object):
 
             iterationScope = scopes[scopeI]
 
-            if iterationScope.scopeType == EnumScopeType.TERMINALSCOPE:
+            if iterationScope.scopeType == Scope.EnumScopeType.TERMINALSCOPE:
                 raise VariableLookupException(variablename)
-            elif iterationScope.scopeType == EnumScopeType.FUNCTIONSCOPE or iterationScope.scopeType == EnumScopeType.NORMALSCOPE:
+            elif iterationScope.scopeType == Scope.EnumScopeType.FUNCTIONSCOPE or iterationScope.scopeType == Scope.EnumScopeType.NORMALSCOPE:
                 if not iterationScope.variableContainer.existVariableByName(variablename):
                     scopeI -= 1
                     continue
 
                 return iterationScope.variableContainer.lookupVariableByName(variablename)
-            elif iterationScope.scopeType == EnumScopeType.NOSCOPE:
+            elif iterationScope.scopeType == Scope.EnumScopeType.NOSCOPE:
                 scopeI -= 1
                 continue
 
