@@ -29,6 +29,9 @@ from AbstractSyntaxTree.TwoWayIfAbstractSyntaxTreeNode import TwoWayIfAbstractSy
 ## rewrites a tree from a Frontend Tree to an AST Tree
 #
 # is necessary because only with this the Supercompiler can work on a General AST while the Frontend Parts can work on language specific representations
+from Frontend.Java.VariableInitializerFrontendAstElement import VariableInitializerFrontendAstElement
+
+
 class TreeRewriter(object):
     @staticmethod
     def rewriteSingleElement(astElement: FrontendAstElement) -> AbstractSyntaxTreeNode:
@@ -115,7 +118,7 @@ class TreeRewriter(object):
         # modifiers can be []
         def getBoundType():
             modifiers = localVariableDeclarationJavaAst.modifiers
-            type = localVariableDeclarationJavaAst.type
+            type = localVariableDeclarationJavaAst.type2
 
             if len(modifiers) > 0:
                 # TODO
@@ -129,6 +132,20 @@ class TreeRewriter(object):
             elif type.type2 == TypeFrontendAstElement.EnumType.REFERENCETYPE:
                 # TODO
                 raise TodoException("reference types are currently not supported")
+
+        # convertVariableInitialisizer can be None, in this case it returns None
+        def convertVariableInitialisizer(variableDeclarator : VariableInitializerFrontendAstElement):
+            if variableDeclarator == None:
+                return None
+            # else here
+
+            # TODO< declarator needs type, if it is a expression or a array thingy >
+            if variableDeclarator.expression == None:
+                # TODO
+                raise TodoException("Non expressions as an initialisizer are not supported yet!")
+            else:
+                # declarator is an expression, convert it
+                return TreeRewriter.rewriteSingleElement(variableDeclarator.expression)
 
         baseBoundType = getBoundType()
 
@@ -144,13 +161,11 @@ class TreeRewriter(object):
                 # TODO
                 raise TodoException("bracket 'modifiers' are currently not supported")
 
-            if iterationVariableDeclarator.variableInitializer:
-                # TODO HIGH
-                raise TodoException("variable initialisizers are currently not supported")
-
             variablename = iterationVariableDeclarator.declarationVariablenameIdentifier.identifierAsString
+            initialisizerConvertedToAst = convertVariableInitialisizer(iterationVariableDeclarator.variableInitializer)
 
             variableDeclarationAstNode = VariableDeclarationAbstractSyntaxTreeNode(baseBoundType, variablename)
+            variableDeclarationAstNode.rightSide = initialisizerConvertedToAst
             resultNonscopedSequence.childrens.append(variableDeclarationAstNode)
 
         return resultNonscopedSequence

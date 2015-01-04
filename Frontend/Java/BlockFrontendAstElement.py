@@ -12,5 +12,7 @@ class BlockFrontendAstElement(FrontendAstElement):
 
         i = 1
 
-        while i < len(data)-1-1:
+        while i < len(data)-1:
             self.elements.append(data[i])
+
+            i += 1

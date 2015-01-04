@@ -6,12 +6,11 @@ class VariableDeclaratorsFrontendAstElement(FrontendAstElement):
     def __init__(self, data):
         super(VariableDeclaratorsFrontendAstElement, self).__init__(EnumFrontendAstElementType.VARIABLEDECLARATORS)
 
-        self.declarators = [data[0]]
+        self.declarators = []
 
-        if len(data) > 1:
-            i = 0
+        i = 0
 
-            while i < (len(data)-1)/2:
-                self.declarators.append(data[1+2*i])
+        while i < (len(data)-1)/2+1:
+            self.declarators.append(data[2*i])
 
-                i += 1
+            i += 1

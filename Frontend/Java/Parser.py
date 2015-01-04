@@ -244,7 +244,6 @@ class Parser(object):
         statementNonforward = \
             block | \
             Literal(";") | \
-            variableDeclaration | \
             (expression + Literal(";")) | \
             ifStatement
 
