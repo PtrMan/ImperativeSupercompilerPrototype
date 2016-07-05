@@ -1,5 +1,6 @@
 from AbstractSyntaxTree.AbstractSyntaxTreeNode import AbstractSyntaxTreeNode
 from AbstractSyntaxTree.EnumAbstractSyntaxTreeNodeType import EnumAbstractSyntaxTreeNodeType
+from Driving.DrivingDescriptor import DrivingDescriptor
 from Exceptions.InterpretationException import InterpretationException
 from Driving.InterpretedResultValue import InterpretedResultValue
 from Driving.DrivingVariableContainer import DrivingVariableContainer
@@ -9,12 +10,18 @@ from Driving.EnumTypeNature import EnumTypeNature
 
 ## Interprets Nodes from the abstract syntax tree
 #
-# used to calculate the value for the residuals while driving
+# used to calculate the value for the nonresiduals while driving
 class AbstractSyntaxTreeInterpreter(object):
     ## tries to interpret only a single evaluable expression with the current variables and returns the result
     # throws an exception if the interpretation doesn't make sense
+    #
+    # does trace the execution into the Driving Graph (for the current branch)
+    # TODO< refine the parameters for that >
     @staticmethod
-    def interpretAndCalculateValue(node: AbstractSyntaxTreeNode, variables: DrivingVariableContainer, typeOperationPolicy: ITypeOperationPolicy) -> InterpretedResultValue:
+    def interpretAndCalculateValueWithTrace(node: AbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor, typeOperationPolicy: ITypeOperationPolicy) -> DrivingValue:
+        """
+        old code (before 06.01.15)
+
         if node.type == EnumAbstractSyntaxTreeNodeType.IDENTIFIER:
             # try to look up the identifier
 
@@ -79,5 +86,25 @@ class AbstractSyntaxTreeInterpreter(object):
 
             return InterpretedResultValue(value)
 
+        else:
+            raise InterpretationException("Unsupported AbstractSyntaxTree element for Interpretation!")
+        """
+
+        # new code < 06.01.15 >
+
+        # TODO< compare parameter with None, and so on >
+        traceIntoGraph = False
+
+
+        if node.type == EnumAbstractSyntaxTreeNodeType.IDENTIFIER:
+            # try to look up the identifier
+
+            # TODO< recode for real oop code ? >
+
+            variableIsDefined = drivingDescriptor.isNameDefined(node.name)
+            if not variableIsDefined:
+                raise InterpretationException("Variablename with identifier {0} is not defined in scope!".format(node.name))
+
+            return drivingDescriptor.lookupName(node.name)
         else:
             raise InterpretationException("Unsupported AbstractSyntaxTree element for Interpretation!")

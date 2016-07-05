@@ -1,0 +1,6 @@
+* 4.1.15  : impl of DrivingValue was changed, but the supercompilercore still is unmodified, modify it so it works again
+
+TODO
+* rip out the DrivingGraphExpressions because the AST can describe everything
+
+* fuse IValuePolicy and ITypeOperationPolicy ?

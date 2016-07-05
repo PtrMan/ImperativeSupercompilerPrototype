@@ -1,0 +1,56 @@
+Supercompiler.driveStep()
+	
+	assert self._ast != None
+
+	for all DrivingDescriptors as iterationDrivingDescriptor:
+		if is LOOP:
+			* add in the driving path a loop entry and set the loop to the loop object
+
+			* add to traceback of driving descriptor the following adress
+			* set astElement of driving descriptor to first child of loop
+		elif is TWO-WAY-CONDITION:
+			if contains variables which are dynamic:
+				* add TWO-WAY-CONDITION to Graph
+
+				* add NOPs to both paths
+
+				* add two Driving descriptors at both paths
+
+				* remove this Descriptor
+			else:
+				* interpret condition and take the way which was evaluated
+		elif is NOP
+			* increment address of iterationDrivingDescriptor
+
+			* check if we are over the number of elements, if so
+				* check if the length of the tracebakc is zero -> driving finished for this iterationDrivingDescriptor
+				* else -> create new Driving Descriptor with the informations of the poped traceback and append
+				* delete iterationDrivingDescriptor
+		elif is CONTINUE:
+			* add a CONTINUE meta-instruction to the Graph
+
+			* reset the iterationDrivingDescriptor.astElementIndex to 0
+		elif is ASSIGNMENT:
+			if variable on the left side is not avalable create a new variable with the type
+				if it is a object create the variable also as a "copied single" variable (TODO, search for name in paper)
+
+			if (uses only static variables):
+				assign new static variable to value
+			else:
+				write assigment with resolved constants to graph
+
+
+TODO:
+
+for each loop checkpoint we need for each context a counter with the done iterations
+we check the number of iterations and if it is too large we try to fold the loop and reset all other current contexts which are in the loop if possible
+	* implementation in the main aglorithm
+
+* we need to store the taken path and the condition variables (even if they are static) for a condition
+  because
+  on generalisation we maybe need to bundle the if's with the two paths together if they differ in some contexts
+
+
+UML:
+objects + "copied single" variable mechanism
+

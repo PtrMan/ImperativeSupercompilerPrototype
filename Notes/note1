@@ -1,0 +1,8 @@
+supercompiler
+
+* write variable declaration and setting code
+
+* rewrite driving part to use IVariableScopesRedirector for variable lookup and storage
+
+* is it necessary to have a variable history (for *** values)?
+

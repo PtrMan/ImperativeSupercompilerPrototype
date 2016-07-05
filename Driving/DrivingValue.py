@@ -2,19 +2,13 @@ from Driving.EnumTypeNature import EnumTypeNature
 from Driving.EnumDrivingVariableConstness import EnumDrivingVariableConstness
 from Driving.BoundTypeInformation import BoundTypeInformation
 
-# TODO< how to handle residuals and non residuals ??? >
-
 # a variable is mapped by its name to a Driving value
 #
 # the value can be changed at different times, but we need to store all nonresidual changes, because they can be accessed at a later time
 # there exists only one "time" for the residual value
 class DrivingValue(object):
     class Value(object):
-        class EnumType(object):
-            BUILTIN = 0
-            USERDEFINED = 1
-
-        def __init__(self, type: DrivingValue.Value.EnumType):
+        def __init__(self, type: EnumTypeNature):
             self.type = type
             self.builtinValue = None
             self.userDefinedValue = None
@@ -22,9 +16,13 @@ class DrivingValue(object):
     def __init__(self, typeNature: EnumTypeNature):
         self.boundTypeInformation = BoundTypeInformation(typeNature)
         self.constness = EnumDrivingVariableConstness.INVALID
+        self.alreadyAssigned = False # used for checking of double assignment of constants
 
-        self.residualValue = None # Value
+        self.residualName = None # is the variablename for a residual variable/value, can be None if it is just a nonresidual value (constant, etc)
         self.nonresidualValue = [] # [Value]  is an array because the value(s) have to be accessable at a later time
+
+    def isResidual(self):
+        return self.residualName != None
 
     @staticmethod
     def createWithGivenBoundTypeInformation(boundTypeInformation: BoundTypeInformation):

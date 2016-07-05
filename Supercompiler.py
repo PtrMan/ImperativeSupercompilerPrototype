@@ -1,6 +1,10 @@
 # small prototype for a supercompiler
+from AbstractSyntaxTree.AbstractSyntaxTreeNode import AbstractSyntaxTreeNode
+from Driving.Graph.DeclarationGraphElement import DeclarationGraphElement
 
 from DrivingGraphExpressions.ConstantExpression import ConstantExpression
+from Exceptions.TodoException import TodoException
+
 
 class Graph(object):
     def __init__(self):
@@ -29,7 +33,7 @@ class Value(object):
         self.valueInt = 0
 
 from Driving.Graph.EnumDrivingGraphElementContentType import EnumDrivingGraphElementContentType
-from Driving.Graph.AssignmentElement import AssignmentElement as DrivingGraphAssignmentElement
+from Driving.Graph.AssignmentElement import AssignmentElement as DrivingGraphAssignmentElement, AssignmentElement
 from Driving.Graph.HintElement import HintElement as DrivingGraphHintElement
 from Driving.Graph.Element import Element as DrivingGraphElement
 
@@ -85,6 +89,9 @@ class Supercompiler(object):
 
         # class inherited from Driving.ITypeOperationPolicy
         self._typeOperationPolicy = None
+
+        # class inherited from Driving.IValuePolicy
+        self._valuePolicy = None
 
     def _drive(self):
         self._drivingGraph.resetGraph()
@@ -161,6 +168,8 @@ class Supercompiler(object):
                 iterationDrivingDescriptor.astElementIndex = 0
 
             elif astElementType == EnumAbstractSyntaxTreeNodeType.ASSIGNMENT:
+                # TODO
+                raise TodoException("code has to be rewritten to use the changed Value class stuff")
 
 
                 # check if left side is a identifier
@@ -209,8 +218,13 @@ class Supercompiler(object):
                 iterationDrivingDescriptor.astElementIndex += 1
 
             elif astElementType == EnumAbstractSyntaxTreeNodeType.ASSIGNMENTOPERATION:
+                # TODO
+                raise TodoException("code has to be rewritten to use the changed Value class stuff")
+
+
                 currentNode = iterationDrivingDescriptor.astElement.childrens[iterationDrivingDescriptor.astElementIndex]
 
+                # TODO< call and handling has to be rewritten to use the new handling >
                 interpretedResultValue = AbstractSyntaxTreeInterpreter.interpretAndCalculateValue(currentNode, iterationDrivingDescriptor.variableContainer, self._typeOperationPolicy)
 
                 # assert on assignment
@@ -244,6 +258,10 @@ class Supercompiler(object):
         NO = 0
 
     def _interpretTwoWayIf(self, twoWayIf: TwoWayIfAbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor):
+        # TODO
+        raise TodoException("code has to be rewritten to use the changed Value class stuff")
+
+
         # first we need to evaluate the expression into a boolean value
         # for that we need to check if the <residual> is completly statically evaluable
         # if not, we have to writeout the expression completly
@@ -342,39 +360,64 @@ class Supercompiler(object):
             assert False, "TODO"
 
     def _interpretVariableDeclaration(self, variableDeclarationNode: VariableDeclarationAbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor):
-        # NOTE< only imperative languages where declaration of variables is necessary use this code >
+        # new code 05.01.2015
 
-        # TODO< this does handle only <residual>s, we need code for non-residuals >
 
-        # TODO< lookup the top variablecontainer
-        #       for now we take the only variable container >
-        topVariableContainer = drivingDescriptor.variableContainer
+        drivingValue = None
 
-        if topVariableContainer.existVariableByName(variableDeclarationNode.variableName):
-            raise DrivingException("Variable definition for variable {0} redefines allready defined variable!".format(variableDeclarationNode.variableName))
+        # handling of non-residual stuff only?
+        if variableDeclarationNode.rightSide == None:
+            if self._valuePolicy.isStandardValueAssignedForType(variableDeclarationNode.boundType):
+                drivingValue = self._valuePolicy.getStandardValueForType(variableDeclarationNode.boundType)
+        else:
+            # nothing done here for now
+            # NOTE< maybe we have here a problem with the residual value >
+            pass
 
-        self._declareVariable(variableDeclarationNode.variableName, topVariableContainer)
+        drivingDescriptor.declareLocalVariable(variableDeclarationNode.variableName, drivingValue)
+
+        # write the declaration into the driving graph, with the drivingValue as the variable for later identification and translation
+        declarationGraphElement = DeclarationGraphElement(variableDeclarationNode.boundType, variableDeclarationNode.variableName, drivingValue)
+        self._drivingGraph.addElement(declarationGraphElement)
 
         if variableDeclarationNode.rightSide != None:
-            # interpret the right side
-
-            resultOnRightSideWithResidualInfo = self._calculateExpressionAndWriteoutNonresidualsIfNeeded(variableDeclarationNode.rightSide, topVariableContainer)
-
-            # we only handle the residual case until now
-            assert resultOnRightSideWithResidualInfo.isResidual
-            resultOnRightSide = resultOnRightSideWithResidualInfo.residual
-
-            assignedVariable = DrivingVariable()
-            assignedVariable.name = variableDeclarationNode.variableName
-            assignedVariable.value = resultOnRightSide
-
-            self._assignValueToVariable([variableDeclarationNode.variableName], assignedVariable, topVariableContainer)
-
-            # TODO< writeout the variable assignment >
-            x = 0
+            self._executeAssignment(drivingValue, variableDeclarationNode.rightSide, drivingDescriptor)
 
         drivingDescriptor.astElementIndex += 1
 
+    # writes out calculation information about residuals if necessary
+    def _executeAssignment(self, targetDrivingValue : DrivingValue, rightSide: AbstractSyntaxTreeNode, drivingDescriptor: DrivingDescriptor):
+        assert targetDrivingValue.isResidual(), "targetDrivingValue is a nonresidual!"
+
+        operationResultValue = AbstractSyntaxTreeInterpreter.interpretAndCalculateValueWithTrace(rightSide, drivingDescriptor, self._typeOperationPolicy)
+
+        # typecheck the assigment types
+        assigmentIsAllowed = self._typeOperationPolicy.isAssignmentOperationAllowed(targetDrivingValue.boundTypeInformation, operationResultValue.boundTypeInformation)
+        if not assigmentIsAllowed:
+            raise InterpretationException("Assignment for variable {0} is type wise not allowed!".format(targetDrivingValue.residualName))
+
+        # check constness of left and check assignment flag
+        if targetDrivingValue.constness == EnumDrivingVariableConstness.CONSTANT and targetDrivingValue.alreadyAssigned:
+            raise InterpretationException("Assignment for variable {0} is invalid, because it is a contant and gets reassigned!".format(targetDrivingValue.residualName))
+
+        # TODO< write out assignment into driving graph, with the index of the nonresidual value on the right side >
+        assigmentDrivingGraphElement = AssignmentElement()
+        assigmentDrivingGraphElement.leftDrivingValue = targetDrivingValue
+        assigmentDrivingGraphElement.rightDrivingValue = operationResultValue
+
+        assigmentDrivingGraphElement.rightNonresidualIndex = len(operationResultValue.nonresidualValue)-1
+
+        # TODO< assign the nonresidual to the left >
+        x = 2
+
+        # set assignment flag of left
+        targetDrivingValue.alreadyAssigned = True
+
+        raise TodoException("")
+
+
+    # old code
+    """
     # contains the informations if a variables was only calculated as a <residual>, if so what the residual value is
     # if not it contains the id TODO< is it a id or a key-string or something else > of the variable/object which has written out
     # in the drivingGraph
@@ -467,6 +510,7 @@ class Supercompiler(object):
     def _isTypeCastableToType(self, fromCastType: BoundTypeInformation, toCastType: BoundTypeInformation, EnumTakeOverloadedOperatorsIntoAccount):
         # not implemented yet because it is currently not used
         assert False, "TODO"
+    """
 
 # example without parser
 from AbstractSyntaxTree.SequenceAbstractSyntaxTreeNode import SequenceAbstractSyntaxTreeNode

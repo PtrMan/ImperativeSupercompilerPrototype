@@ -9,6 +9,7 @@ from AbstractSyntaxTree.EnumBinaryOperationType import EnumBinaryOperationType
 # Every language (Java, C#, Python, etc) implements another policy of the allowed operations and the resulting values and types
 # So for every language a new class of this class must be inherited, which implements all methods
 class ITypeOperationPolicy(object):
+    # TODO< take assignemnt out >
     # \param isAssignment if its true its in the form A ?= B, where ? is any binary operation
     def isBinaryOperationAllowed(self, leftSide: BoundTypeInformation, rightSide: BoundTypeInformation, operationType: EnumBinaryOperationType, isAssignment: bool) -> bool:
         raise NotImplementedError()
@@ -29,4 +30,7 @@ class ITypeOperationPolicy(object):
 
     ## gets the value of an implicit cast, throws something if the cast is not possible
     def getValueOfImplicitCastToBuildinType(self, value: DrivingValue, castToType: BoundTypeInformation):
+        raise NotImplementedError()
+
+    def isAssignmentOperationAllowed(self, leftSide: BoundTypeInformation, rightSide: BoundTypeInformation):
         raise NotImplementedError()

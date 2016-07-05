@@ -1,4 +1,5 @@
 from Driving.DrivingDescriptorVariableScopeRedirector import DrivingDescriptorVariableScopeRedirector
+from Driving.DrivingValue import DrivingValue
 from Driving.DrivingVariable import DrivingVariable
 from Driving.Scope import Scope
 from Exceptions.VariableManagmentException import VariableManagmentException
@@ -67,6 +68,7 @@ class DrivingDescriptor(object):
         # TODO
         assert False, "TODO"
 
+    # NOTE DEPRECATED because it returns a DrivingVariable and not a value
     # throws an exception if the variable was not found
     def lookupVariable(self, variablename: str) -> DrivingVariable:
         assert len(self.traceback) > 0
@@ -85,6 +87,23 @@ class DrivingDescriptor(object):
                 continue
 
             return lookupResult
+
+    def lookupName(self, variablename: str) -> DrivingValue:
+        # TODO< recode the lookupVariable() into this and use range style >
+        return self.lookupVariable(variablename).value
+
+    def isNameDefined(self, variablename: str) -> bool:
+        assert len(self.traceback) > 0
+
+        for trackbackI in reversed(range(0, len(self.traceback))):
+            iterationTrackbackElement = self.traceback[trackbackI]
+
+            lookupResult = DrivingDescriptor._lookupScopesByVariablename(variablename, iterationTrackbackElement.scopes)
+
+            if lookupResult != None:
+                return True
+
+        return False
 
     # returns none if it couldn't find the Variable
     @staticmethod

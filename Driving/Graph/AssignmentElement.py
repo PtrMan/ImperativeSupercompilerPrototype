@@ -5,6 +5,7 @@ class AssignmentElement(Element):
     def __init__(self):
         super(AssignmentElement, self).__init__(EnumDrivingGraphElementContentType.ASSIGNMENT)
 
-        self.leftVariableName = None
-        self.rightExpression = None # must be derived from DrivingGraphExpressions.Expression
-                                    # is the expression which gets evaluated for the value of the variable
+        self.leftDrivingValue = None
+        self.rightDrivingValue = None
+
+        self.rightNonresidualIndex = None # index of the nonresidual value on the right side
